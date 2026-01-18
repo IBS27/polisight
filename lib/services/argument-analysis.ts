@@ -29,8 +29,8 @@ const LLMArgumentResponseSchema = z.object({
     content: z.string(),
     sourceSentenceIndices: z.array(z.number()),
     confidence: z.number(),
-    timeframe: z.string().optional(),
-    conditions: z.string().optional(),
+    timeframe: z.string().nullable().optional(),
+    conditions: z.string().nullable().optional(),
     isConditional: z.boolean(),
   })),
   values: z.array(z.object({

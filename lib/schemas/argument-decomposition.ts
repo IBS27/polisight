@@ -50,8 +50,8 @@ export const PredictionSchema = z.object({
   content: z.string().min(10).max(500),
   sourceSentences: z.array(SentenceReferenceSchema).min(1),
   confidence: z.number().min(0).max(1),
-  timeframe: z.string().optional(), // e.g., "2025", "within 5 years", "immediate"
-  conditions: z.string().optional(), // What conditions must hold for prediction
+  timeframe: z.string().nullable().optional(), // e.g., "2025", "within 5 years", "immediate"
+  conditions: z.string().nullable().optional(), // What conditions must hold for prediction
   isConditional: z.boolean(),
 });
 
