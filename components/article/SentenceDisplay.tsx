@@ -54,7 +54,9 @@ export function SentenceDisplay({
   const primaryHighlight = highlights[0];
   const hasHighlight = highlights.length > 0;
 
-  const baseClasses = 'py-1 px-2 rounded cursor-pointer transition-colors duration-150';
+  // Reduced padding and rounding for tighter sentence spacing
+  // box-decoration-clone ensures highlights maintain appearance when wrapping lines
+  const baseClasses = 'py-0.5 px-0.5 rounded-sm cursor-pointer transition-colors duration-150 box-decoration-clone';
   const highlightClasses = hasHighlight
     ? cn(
         'border-l-4',

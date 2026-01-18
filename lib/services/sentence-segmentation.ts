@@ -121,6 +121,42 @@ function isEndOfSentence(
 }
 
 // ============================================
+// Post-processing: Merge Isolated Quotes
+// ============================================
+
+/**
+ * Merges isolated quote marks with the preceding sentence.
+ * Handles cases where a closing quote ends up as its own "sentence"
+ * e.g., ['"Hello.', '"'] becomes ['"Hello."']
+ */
+function mergeIsolatedQuotes(sentences: SentenceSpan[]): SentenceSpan[] {
+  const result: SentenceSpan[] = [];
+
+  for (let i = 0; i < sentences.length; i++) {
+    const sentence = sentences[i];
+    const trimmedText = sentence.text.trim();
+
+    // Check if this is an isolated quote (just a quote character, possibly with punctuation)
+    const isIsolatedQuote = /^["'"\u201C\u201D\u2018\u2019]$/.test(trimmedText);
+
+    if (isIsolatedQuote && result.length > 0) {
+      // Merge with the previous sentence
+      const prev = result[result.length - 1];
+      prev.text = prev.text + trimmedText;
+      prev.endChar = sentence.endChar;
+    } else {
+      result.push({ ...sentence });
+    }
+  }
+
+  // Re-index sentences after merging
+  return result.map((sentence, index) => ({
+    ...sentence,
+    sentenceIndex: index,
+  }));
+}
+
+// ============================================
 // Main Segmentation Function
 // ============================================
 
@@ -201,7 +237,8 @@ export function segmentSentences(text: string): SentenceSpan[] {
     }
   }
 
-  return sentences;
+  // Post-process: merge isolated quote marks with preceding sentences
+  return mergeIsolatedQuotes(sentences);
 }
 
 // ============================================

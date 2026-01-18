@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { extractArticle, isValidArticleUrl } from '@/lib/services/article-extractor';
 import { segmentSentences } from '@/lib/services/sentence-segmentation';
 import { createTimedLogger } from '@/lib/services/provenance';
+import { normalizeArticleText } from '@/lib/utils/text-normalization';
 
 // ============================================
 // Route Configuration
@@ -70,13 +71,16 @@ export async function POST(request: NextRequest) {
     // Extract article using Grok
     const extracted = await extractArticle(url);
 
+    // Normalize article text to fix spacing issues from extraction
+    const normalizedText = normalizeArticleText(extracted.text);
+
     // Create article record
     const { data: article, error: articleError } = await supabase
       .from('articles')
       .insert({
         source_url: url,
         title: extracted.title,
-        clean_text: extracted.text,
+        clean_text: normalizedText,
         author: extracted.author,
         publish_date: extracted.publishDate,
         site_name: extracted.siteName,
@@ -94,8 +98,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Segment sentences
-    const sentences = segmentSentences(extracted.text);
+    // Segment sentences from normalized text
+    const sentences = segmentSentences(normalizedText);
 
     // Insert sentence spans
     const sentenceRecords = sentences.map((s) => ({
