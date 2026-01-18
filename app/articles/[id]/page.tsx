@@ -252,16 +252,41 @@ export default function ArticleAnalysisPage({
     }
   };
 
-  // Run analysis
-  const runAnalysis = async () => {
+  // Run full analysis pipeline: Analyze → Omissions → Context
+  const runFullPipeline = async () => {
+    // Step 1: Analyze
     setIsAnalyzing(true);
     try {
       await fetch(`/api/articles/${articleId}/analyze`, { method: 'POST' });
       await fetchArticle();
     } catch (err) {
       console.error('Analysis failed:', err);
-    } finally {
       setIsAnalyzing(false);
+      return; // Stop pipeline on error
+    }
+    setIsAnalyzing(false);
+
+    // Step 2: Detect Omissions
+    setIsDetectingOmissions(true);
+    try {
+      await fetch(`/api/articles/${articleId}/omissions`, { method: 'POST' });
+      await fetchArticle();
+    } catch (err) {
+      console.error('Omission detection failed:', err);
+      setIsDetectingOmissions(false);
+      return; // Stop pipeline on error
+    }
+    setIsDetectingOmissions(false);
+
+    // Step 3: Expand Context
+    setIsExpandingContext(true);
+    try {
+      await fetch(`/api/articles/${articleId}/context`, { method: 'POST' });
+      await fetchArticle();
+    } catch (err) {
+      console.error('Context expansion failed:', err);
+    } finally {
+      setIsExpandingContext(false);
     }
   };
 
@@ -505,8 +530,8 @@ export default function ArticleAnalysisPage({
           <div className="flex items-center gap-2 overflow-x-auto">
             <Button
               size="sm"
-              onClick={runAnalysis}
-              disabled={isAnalyzing}
+              onClick={runFullPipeline}
+              disabled={isAnalyzing || isDetectingOmissions || isExpandingContext}
               variant={hasAnalysis ? 'outline' : 'default'}
             >
               {isAnalyzing ? (
