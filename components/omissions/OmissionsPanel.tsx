@@ -40,7 +40,7 @@ export function OmissionsPanel({ omissions }: OmissionsPanelProps) {
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-1">
         <h3 className="text-sm font-medium text-gray-700">
-          Potential Omissions ({omissions.length})
+          What This Article Doesn't Tell You ({omissions.length})
         </h3>
       </div>
 

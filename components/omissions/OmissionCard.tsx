@@ -72,21 +72,16 @@ export function OmissionCard({
   const Icon = typeIcons[type] || AlertTriangle;
 
   return (
-    <Card size="sm" className="border-l-4 border-l-orange-400 bg-orange-50/50">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4 text-orange-600" />
-            <CardTitle className="text-orange-900">
-              {typeLabels[type]}
-            </CardTitle>
-          </div>
-          <Badge variant="outline" className="text-xs text-orange-600">
-            {methodLabels[method]}
-          </Badge>
+    <Card size="sm" className="bg-orange-50/50 py-2">
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <Icon className="w-4 h-4 text-orange-600" />
+          <CardTitle className="text-orange-900">
+            {typeLabels[type]}
+          </CardTitle>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <p className="text-sm text-gray-700">{description}</p>
 
         {whyItMatters && (

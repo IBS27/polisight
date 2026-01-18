@@ -118,7 +118,7 @@ export function PersonalImpactSection({
         <CardHeader>
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-gray-400" />
-            <CardTitle className="text-lg">Your Personal Impact</CardTitle>
+            <CardTitle className="text-lg">How This Affects You</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="text-center py-6">
@@ -164,7 +164,7 @@ export function PersonalImpactSection({
         <CardHeader>
           <div className="flex items-center gap-2">
             <Calculator className="w-5 h-5 text-blue-500" />
-            <CardTitle className="text-lg">Your Personal Impact</CardTitle>
+            <CardTitle className="text-lg">How This Affects You</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="text-center py-6">
@@ -188,7 +188,7 @@ export function PersonalImpactSection({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calculator className="w-5 h-5 text-blue-500" />
-              <CardTitle className="text-lg">Your Personal Impact</CardTitle>
+              <CardTitle className="text-lg">How This Affects You</CardTitle>
             </div>
             {onCalculate && (
               <Button variant="ghost" size="sm" onClick={onCalculate}>
@@ -282,7 +282,7 @@ export function PersonalImpactSection({
         <CardHeader>
           <div className="flex items-center gap-2">
             <Calculator className="w-5 h-5 text-yellow-500" />
-            <CardTitle className="text-lg">Your Personal Impact</CardTitle>
+            <CardTitle className="text-lg">How This Affects You</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -302,7 +302,7 @@ export function PersonalImpactSection({
       <CardHeader>
         <div className="flex items-center gap-2">
           <FileQuestion className="w-5 h-5 text-gray-400" />
-          <CardTitle className="text-lg">Your Personal Impact</CardTitle>
+          <CardTitle className="text-lg">How This Affects You</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
