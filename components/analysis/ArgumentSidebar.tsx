@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { ArgumentElementCard } from './ArgumentElementCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -9,7 +8,7 @@ import { cn } from '@/lib/utils';
 // Types
 // ============================================
 
-type TabType = 'claims' | 'assumptions' | 'predictions' | 'values';
+export type TabType = 'claims' | 'assumptions' | 'predictions' | 'values';
 
 interface Claim {
   id: string;
@@ -55,6 +54,8 @@ interface ArgumentSidebarProps {
   selectedElementId: string | null;
   highlightedElementId: string | null;
   onElementSelect: (id: string) => void;
+  activeTab: TabType;
+  onTabChange: (tab: TabType) => void;
 }
 
 // ============================================
@@ -80,8 +81,9 @@ export function ArgumentSidebar({
   selectedElementId,
   highlightedElementId,
   onElementSelect,
+  activeTab,
+  onTabChange,
 }: ArgumentSidebarProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('claims');
 
   const counts = {
     claims: claims.length,
@@ -93,11 +95,11 @@ export function ArgumentSidebar({
   return (
     <div className="flex flex-col h-full">
       {/* Tab Header */}
-      <div className="flex border-b mb-4">
+      <div className="flex border-b mb-2">
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => onTabChange(tab.key)}
             className={cn(
               'flex-1 px-2 py-2 text-xs font-medium transition-colors',
               'border-b-2 -mb-px',

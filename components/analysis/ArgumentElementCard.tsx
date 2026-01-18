@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -71,6 +72,18 @@ export function ArgumentElementCard({
   timeframe,
   category,
 }: ArgumentElementCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Scroll into view when selected
+  useEffect(() => {
+    if (isSelected && cardRef.current) {
+      cardRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [isSelected]);
+
   const cardClasses = cn(
     'border-l-4 cursor-pointer transition-all duration-150',
     isSelected
@@ -90,13 +103,13 @@ export function ArgumentElementCard({
         : 'text-red-600';
 
   return (
-    <Card className={cardClasses} onClick={() => onClick(id)}>
-      <CardContent className="p-3">
+    <Card ref={cardRef} size="sm" className={cardClasses} onClick={() => onClick(id)}>
+      <CardContent>
         {/* Content */}
-        <p className="text-sm text-gray-800 mb-2">{content}</p>
+        <p className="text-sm text-gray-800 mb-1">{content}</p>
 
         {/* Badges row */}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {/* Confidence badge */}
           <Badge variant="outline" className={cn('text-xs', confidenceColor)}>
             {confidencePercent}% conf

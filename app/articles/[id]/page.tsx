@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { ArticleTextPanel } from '@/components/article/ArticleTextPanel';
-import { ArgumentSidebar } from '@/components/analysis/ArgumentSidebar';
+import { ArgumentSidebar, type TabType } from '@/components/analysis/ArgumentSidebar';
 import { OmissionsPanel } from '@/components/omissions/OmissionsPanel';
 import { ContextCardsPanel } from '@/components/context/ContextCardsPanel';
 import { PersonalImpactSection } from '@/components/impact/PersonalImpactSection';
@@ -126,6 +126,7 @@ export default function ArticleAnalysisPage({
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [highlightedElementId, setHighlightedElementId] = useState<string | null>(null);
   const [showProvenance, setShowProvenance] = useState(false);
+  const [activeArgumentTab, setActiveArgumentTab] = useState<TabType>('claims');
 
   // Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -210,20 +211,47 @@ export default function ArticleAnalysisPage({
 
   // Handle sentence selection
   const handleSentenceSelect = (index: number) => {
-    // Find elements that reference this sentence
-    const allElements = [
-      ...data?.argumentElements.claims || [],
-      ...data?.argumentElements.assumptions || [],
-      ...data?.argumentElements.predictions || [],
-      ...data?.argumentElements.values || [],
-    ];
+    // Find elements that reference this sentence and determine type
+    const claims = data?.argumentElements.claims || [];
+    const assumptions = data?.argumentElements.assumptions || [];
+    const predictions = data?.argumentElements.predictions || [];
+    const values = data?.argumentElements.values || [];
 
-    const matchingElement = allElements.find(e =>
+    // Check each category to find the matching element and its type
+    const matchingClaim = claims.find(e =>
       e.sourceSentences.some(s => s.sentenceIndex === index)
     );
+    if (matchingClaim) {
+      setSelectedElementId(matchingClaim.id);
+      setActiveArgumentTab('claims');
+      return;
+    }
 
-    if (matchingElement) {
-      setSelectedElementId(matchingElement.id);
+    const matchingAssumption = assumptions.find(e =>
+      e.sourceSentences.some(s => s.sentenceIndex === index)
+    );
+    if (matchingAssumption) {
+      setSelectedElementId(matchingAssumption.id);
+      setActiveArgumentTab('assumptions');
+      return;
+    }
+
+    const matchingPrediction = predictions.find(e =>
+      e.sourceSentences.some(s => s.sentenceIndex === index)
+    );
+    if (matchingPrediction) {
+      setSelectedElementId(matchingPrediction.id);
+      setActiveArgumentTab('predictions');
+      return;
+    }
+
+    const matchingValue = values.find(e =>
+      e.sourceSentences.some(s => s.sentenceIndex === index)
+    );
+    if (matchingValue) {
+      setSelectedElementId(matchingValue.id);
+      setActiveArgumentTab('values');
+      return;
     }
   };
 
@@ -435,6 +463,8 @@ export default function ArticleAnalysisPage({
                   selectedElementId={selectedElementId}
                   highlightedElementId={highlightedElementId}
                   onElementSelect={setSelectedElementId}
+                  activeTab={activeArgumentTab}
+                  onTabChange={setActiveArgumentTab}
                 />
               </div>
             </div>
