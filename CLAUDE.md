@@ -20,7 +20,7 @@ Polisight is a political literacy web app that analyzes policy articles to help 
 | Service | File | Model | Purpose |
 |---------|------|-------|---------|
 | Article Extraction | `lib/services/article-extractor.ts` | `x-ai/grok-4.1-fast:online` | Extract article content from URLs |
-| Argument Analysis | `lib/services/gemini.ts` | `google/gemini-2.5-flash-preview-05-20` | Analyze claims, evidence, rhetoric |
+| Argument Analysis | `lib/services/gemini.ts` | `google/gemini-3-flash-preview` | Analyze claims, evidence, rhetoric |
 | Context/Research | `lib/services/perplexity.ts` | `perplexity/sonar-pro` | Real-time fact-checking, citations |
 
 ### Key Directories
