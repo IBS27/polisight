@@ -37,15 +37,15 @@ export const CurrentBenefitsSchema = z.object({
 export type CurrentBenefits = z.infer<typeof CurrentBenefitsSchema>;
 
 export const UserProfileSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.string().uuid().nullish(),
 
   // Basic Demographics
-  age: z.number().int().min(0).max(150).optional(),
-  state: z.string().length(2).optional(),
-  city: z.string().max(100).optional(),
-  zip_code: z.string().max(10).optional(),
-  household_size: z.number().int().min(1).optional(),
-  marital_status: z.enum(['single', 'married', 'divorced', 'widowed', 'separated']).optional(),
+  age: z.number().int().min(0).max(150).nullish(),
+  state: z.string().length(2).nullish(),
+  city: z.string().max(100).nullish(),
+  zip_code: z.string().max(10).nullish(),
+  household_size: z.number().int().min(1).nullish(),
+  marital_status: z.enum(['single', 'married', 'divorced', 'widowed', 'separated']).nullish(),
 
   // Income & Employment
   employment_status: z.enum([
@@ -56,26 +56,26 @@ export const UserProfileSchema = z.object({
     'retired',
     'student',
     'disabled',
-  ]).optional(),
-  individual_income: z.number().min(0).optional(),
-  household_income: z.number().min(0).optional(),
+  ]).nullish(),
+  individual_income: z.number().min(0).nullish(),
+  household_income: z.number().min(0).nullish(),
   tax_filing_status: z.enum([
     'single',
     'married_filing_jointly',
     'married_filing_separately',
     'head_of_household',
     'qualifying_widow',
-  ]).optional(),
-  industry: z.string().max(100).optional(),
+  ]).nullish(),
+  industry: z.string().max(100).nullish(),
 
   // Housing & Finances
-  rent_vs_own: z.enum(['rent', 'own', 'other']).optional(),
-  annual_housing_payment: z.number().min(0).optional(),
-  student_loan_balance: z.number().min(0).optional(),
-  other_debts: z.number().min(0).optional(),
+  rent_vs_own: z.enum(['rent', 'own', 'other']).nullish(),
+  annual_housing_payment: z.number().min(0).nullish(),
+  student_loan_balance: z.number().min(0).nullish(),
+  other_debts: z.number().min(0).nullish(),
 
   // Healthcare
-  insurance_status: z.enum(['insured', 'uninsured', 'underinsured']).optional(),
+  insurance_status: z.enum(['insured', 'uninsured', 'underinsured']).nullish(),
   insurance_type: z.enum([
     'employer',
     'marketplace',
@@ -85,22 +85,38 @@ export const UserProfileSchema = z.object({
     'tricare',
     'private',
     'none',
-  ]).optional(),
-  dependents_covered: z.number().int().min(0).optional(),
+  ]).nullish(),
+  dependents_covered: z.number().int().min(0).nullish(),
 
   // Education
-  student_status: z.enum(['not_student', 'part_time', 'full_time']).optional(),
+  student_status: z.enum(['not_student', 'part_time', 'full_time']).nullish(),
   institution_type: z.enum([
     'public_2year',
     'public_4year',
     'private_nonprofit',
     'private_forprofit',
     'none',
-  ]).optional(),
-  in_state_vs_out_of_state: z.enum(['in_state', 'out_of_state', 'not_applicable']).optional(),
+  ]).nullish(),
+  in_state_vs_out_of_state: z.enum(['in_state', 'out_of_state', 'not_applicable']).nullish(),
 
   // Current Benefits
-  current_benefits: CurrentBenefitsSchema.optional(),
+  current_benefits: CurrentBenefitsSchema.nullish(),
+
+  // Assets
+  retirement_accounts: z.number().min(0).nullish(),
+  investment_accounts: z.number().min(0).nullish(),
+  home_equity: z.number().min(0).nullish(),
+
+  // Life Plans
+  planning_home_purchase: z.boolean().nullish(),
+  planning_retirement_soon: z.boolean().nullish(),
+  planning_children: z.boolean().nullish(),
+  planning_start_business: z.boolean().nullish(),
+
+  // Work Details
+  is_gig_worker: z.boolean().nullish(),
+  is_union_member: z.boolean().nullish(),
+  is_small_business_owner: z.boolean().nullish(),
 });
 
 export type UserProfile = z.infer<typeof UserProfileSchema>;

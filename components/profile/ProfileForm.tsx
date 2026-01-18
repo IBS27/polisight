@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
-import { User, Briefcase, Home, Heart, GraduationCap, Gift } from 'lucide-react';
+import { User, Briefcase, Home, Heart, GraduationCap, Gift, PiggyBank, Target } from 'lucide-react';
 
 // ============================================
 // Types
@@ -46,6 +46,19 @@ interface ProfileData {
     child_tax_credit?: boolean;
     earned_income_tax_credit?: boolean;
   };
+  // Assets
+  retirementAccounts?: number;
+  investmentAccounts?: number;
+  homeEquity?: number;
+  // Life Plans
+  planningHomePurchase?: boolean;
+  planningRetirementSoon?: boolean;
+  planningChildren?: boolean;
+  planningStartBusiness?: boolean;
+  // Work Details
+  isGigWorker?: boolean;
+  isUnionMember?: boolean;
+  isSmallBusinessOwner?: boolean;
 }
 
 interface ProfileFormProps {
@@ -414,6 +427,108 @@ export function ProfileForm({ data, onChange }: ProfileFormProps) {
                 <span className="text-sm">{label}</span>
               </label>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Assets */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <PiggyBank className="w-4 h-4" />
+            Assets
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="retirementAccounts">Retirement Accounts ($)</Label>
+            <Input
+              id="retirementAccounts"
+              type="number"
+              min={0}
+              value={data.retirementAccounts || ''}
+              onChange={(e) => updateField('retirementAccounts', parseFloat(e.target.value) || undefined)}
+              placeholder="401k, IRA, etc."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="investmentAccounts">Investment Accounts ($)</Label>
+            <Input
+              id="investmentAccounts"
+              type="number"
+              min={0}
+              value={data.investmentAccounts || ''}
+              onChange={(e) => updateField('investmentAccounts', parseFloat(e.target.value) || undefined)}
+              placeholder="Brokerage, stocks, etc."
+            />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="homeEquity">Home Equity ($)</Label>
+            <Input
+              id="homeEquity"
+              type="number"
+              min={0}
+              value={data.homeEquity || ''}
+              onChange={(e) => updateField('homeEquity', parseFloat(e.target.value) || undefined)}
+              placeholder="Home value minus mortgage"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Life Plans & Work */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Target className="w-4 h-4" />
+            Life Plans & Work
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            Select any that apply to help us find relevant policies:
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-gray-500 uppercase">Life Plans</p>
+              {[
+                { key: 'planningHomePurchase', label: 'Planning to buy a home' },
+                { key: 'planningRetirementSoon', label: 'Planning to retire soon' },
+                { key: 'planningChildren', label: 'Planning to have children' },
+                { key: 'planningStartBusiness', label: 'Planning to start a business' },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={data[key as keyof ProfileData] as boolean || false}
+                    onChange={(e) => updateField(key as keyof ProfileData, e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-gray-500 uppercase">Work Situation</p>
+              {[
+                { key: 'isGigWorker', label: 'Gig/freelance worker' },
+                { key: 'isUnionMember', label: 'Union member' },
+                { key: 'isSmallBusinessOwner', label: 'Small business owner' },
+              ].map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={data[key as keyof ProfileData] as boolean || false}
+                    onChange={(e) => updateField(key as keyof ProfileData, e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

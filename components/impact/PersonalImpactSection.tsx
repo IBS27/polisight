@@ -41,6 +41,21 @@ interface CalculationBreakdownData {
   inputsUsed: Record<string, string | number>;
 }
 
+// Impact context
+interface ImpactContext {
+  asPercentageOfIncome: number | null;
+  monthlyEquivalent: number;
+  monthsOfHousingPayment: number | null;
+}
+
+// Additional dimension
+interface AdditionalDimension {
+  name: string;
+  value: number;
+  unit: 'dollars' | 'percentage' | 'boolean';
+  description: string;
+}
+
 // Computed result
 interface ComputedResult {
   calculationStatus: 'computed';
@@ -50,6 +65,8 @@ interface ComputedResult {
   calculationBreakdown: CalculationBreakdownData;
   caveats: Caveat[];
   confidenceLevel?: number;
+  context?: ImpactContext;
+  additionalDimensions?: AdditionalDimension[];
   headline: string;
   explanation: string;
 }
@@ -189,7 +206,43 @@ export function PersonalImpactSection({
             explanation={data.explanation}
             caveats={data.caveats}
             confidenceLevel={data.confidenceLevel}
+            context={data.context}
           />
+
+          {/* Additional Dimensions */}
+          {data.additionalDimensions && data.additionalDimensions.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-500">Other Impact Dimensions</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {data.additionalDimensions.map((dimension, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        {dimension.name}
+                      </span>
+                      <span className="text-lg font-semibold text-gray-900">
+                        {dimension.unit === 'dollars'
+                          ? dimension.value.toLocaleString('en-US', {
+                              style: 'currency',
+                              currency: 'USD',
+                              maximumFractionDigits: 0,
+                            })
+                          : dimension.unit === 'percentage'
+                            ? `${dimension.value}%`
+                            : dimension.value ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {dimension.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Show/Hide Breakdown */}
           <Button

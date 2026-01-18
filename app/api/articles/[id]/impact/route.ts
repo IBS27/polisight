@@ -124,6 +124,19 @@ export async function POST(
       institution_type: profile.institution_type,
       in_state_vs_out_of_state: profile.in_state_vs_out_of_state,
       current_benefits: profile.current_benefits,
+      // Assets
+      retirement_accounts: profile.retirement_accounts ? parseFloat(profile.retirement_accounts) : undefined,
+      investment_accounts: profile.investment_accounts ? parseFloat(profile.investment_accounts) : undefined,
+      home_equity: profile.home_equity ? parseFloat(profile.home_equity) : undefined,
+      // Life Plans
+      planning_home_purchase: profile.planning_home_purchase,
+      planning_retirement_soon: profile.planning_retirement_soon,
+      planning_children: profile.planning_children,
+      planning_start_business: profile.planning_start_business,
+      // Work Details
+      is_gig_worker: profile.is_gig_worker,
+      is_union_member: profile.is_union_member,
+      is_small_business_owner: profile.is_small_business_owner,
     };
 
     // Calculate impact

@@ -95,6 +95,31 @@ export const CalculationBreakdownSchema = z.object({
 export type CalculationBreakdown = z.infer<typeof CalculationBreakdownSchema>;
 
 // ============================================
+// Impact Context Schema
+// ============================================
+
+export const ImpactContextSchema = z.object({
+  asPercentageOfIncome: z.number().nullable(),
+  monthlyEquivalent: z.number(),
+  monthsOfHousingPayment: z.number().nullable(),
+});
+
+export type ImpactContext = z.infer<typeof ImpactContextSchema>;
+
+// ============================================
+// Additional Dimension Schema
+// ============================================
+
+export const AdditionalDimensionSchema = z.object({
+  name: z.string(),
+  value: z.number(),
+  unit: z.enum(['dollars', 'percentage', 'boolean']),
+  description: z.string(),
+});
+
+export type AdditionalDimension = z.infer<typeof AdditionalDimensionSchema>;
+
+// ============================================
 // Impact Calculation Result (discriminated union)
 // ============================================
 
@@ -108,6 +133,12 @@ export const ImpactCalculationResultSchema = z.discriminatedUnion('calculationSt
     calculationBreakdown: CalculationBreakdownSchema,
     caveats: z.array(CaveatSchema),
     confidenceLevel: z.number().min(0).max(1).optional(),
+
+    // Contextual information for meaningful interpretation
+    context: ImpactContextSchema.optional(),
+
+    // Additional impact dimensions from multiple formulas
+    additionalDimensions: z.array(AdditionalDimensionSchema).optional(),
 
     // Optional: comparison to average
     comparisonToAverage: z.object({

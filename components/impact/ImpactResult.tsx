@@ -14,6 +14,12 @@ interface Caveat {
   severity: 'low' | 'medium' | 'high';
 }
 
+interface ImpactContext {
+  asPercentageOfIncome: number | null;
+  monthlyEquivalent: number;
+  monthsOfHousingPayment: number | null;
+}
+
 interface ImpactResultProps {
   value: number;
   unit: 'dollars_annual' | 'dollars_monthly' | 'dollars_one_time' | 'percentage' | 'qualitative';
@@ -22,6 +28,7 @@ interface ImpactResultProps {
   explanation: string;
   caveats: Caveat[];
   confidenceLevel?: number;
+  context?: ImpactContext;
 }
 
 // ============================================
@@ -73,6 +80,7 @@ export function ImpactResult({
   explanation,
   caveats,
   confidenceLevel,
+  context,
 }: ImpactResultProps) {
   const isPositive = direction === 'positive';
   const isNegative = direction === 'negative';
@@ -124,6 +132,34 @@ export function ImpactResult({
           </div>
         </div>
       </div>
+
+      {/* Context */}
+      {context && (
+        <div className="flex flex-wrap gap-3 text-sm">
+          {context.asPercentageOfIncome !== null && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full">
+              <span className="font-medium">{context.asPercentageOfIncome}%</span>
+              <span className="text-gray-500">of annual income</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full">
+            <span className="font-medium">
+              {Math.abs(context.monthlyEquivalent).toLocaleString('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0,
+              })}
+            </span>
+            <span className="text-gray-500">/month</span>
+          </div>
+          {context.monthsOfHousingPayment !== null && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full">
+              <span className="font-medium">{context.monthsOfHousingPayment}</span>
+              <span className="text-gray-500">months of housing payments</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Explanation */}
       <p className="text-sm text-gray-600">{explanation}</p>

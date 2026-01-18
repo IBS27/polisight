@@ -58,80 +58,82 @@ export async function POST(
 
     // Note: We'll use atomic replace at the end instead of deleting here
 
-    // Expand context for claims
+    // Build all context expansion tasks
+    const contextTasks: Array<{
+      id: string;
+      elementType: 'claim' | 'assumption' | 'omission';
+      content: string;
+      title: string;
+      query: string;
+    }> = [];
+
+    // Add argument elements (claims/assumptions)
     if (argumentElements && argumentElements.length > 0) {
       for (const element of argumentElements) {
         const elementType = element.element_type as 'claim' | 'assumption';
-        const query = generateContextQuery(elementType, element.content, article.title);
-
-        try {
-          const contextData = await searchWithCitations(query);
-
-          // Extract key facts from the content (simple extraction)
-          const sentences = contextData.content.split(/[.!?]+/).filter(s => s.trim().length > 20);
-          const keyFacts = sentences.slice(0, 3).map((fact, idx) => ({
-            fact: fact.trim(),
-            citationIndex: Math.min(idx, contextData.citations.length - 1),
-          }));
-
-          const card = {
-            contextFor: elementType,
-            relatedElementId: element.id,
-            title: element.content,
-            summary: contextData.content,
-            keyFacts,
-            citations: contextData.citations.map(c => ({
-              url: c.url,
-              title: c.title,
-              domain: c.domain,
-              snippet: c.snippet,
-            })),
-          };
-
-          contextCards.push(card);
-
-          // Small delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (error) {
-          console.error(`Failed to expand context for element ${element.id}:`, error);
-        }
+        contextTasks.push({
+          id: element.id,
+          elementType,
+          content: element.content,
+          title: element.content,
+          query: generateContextQuery(elementType, element.content, article.title),
+        });
       }
     }
 
-    // Expand context for omissions
+    // Add omissions
     if (omissions && omissions.length > 0) {
       for (const omission of omissions) {
-        const query = generateContextQuery('omission', omission.description, article.title);
+        contextTasks.push({
+          id: omission.id,
+          elementType: 'omission',
+          content: omission.description,
+          title: omission.omission_type,
+          query: generateContextQuery('omission', omission.description, article.title),
+        });
+      }
+    }
 
+    // Execute all context expansions in parallel
+    const contextResults = await Promise.all(
+      contextTasks.map(async (task) => {
         try {
-          const contextData = await searchWithCitations(query);
+          const contextData = await searchWithCitations(task.query);
 
+          // Extract key facts from the content
           const sentences = contextData.content.split(/[.!?]+/).filter(s => s.trim().length > 20);
           const keyFacts = sentences.slice(0, 3).map((fact, idx) => ({
             fact: fact.trim(),
             citationIndex: Math.min(idx, contextData.citations.length - 1),
           }));
 
-          const card = {
-            contextFor: 'omission',
-            relatedElementId: omission.id,
-            title: omission.omission_type,
-            summary: contextData.content,
-            keyFacts,
-            citations: contextData.citations.map(c => ({
-              url: c.url,
-              title: c.title,
-              domain: c.domain,
-              snippet: c.snippet,
-            })),
+          return {
+            success: true as const,
+            card: {
+              contextFor: task.elementType,
+              relatedElementId: task.id,
+              title: task.title,
+              summary: contextData.content,
+              keyFacts,
+              citations: contextData.citations.map(c => ({
+                url: c.url,
+                title: c.title,
+                domain: c.domain,
+                snippet: c.snippet,
+              })),
+            },
           };
-
-          contextCards.push(card);
-
-          await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
-          console.error(`Failed to expand context for omission ${omission.id}:`, error);
+          console.error(`Failed to expand context for ${task.elementType} ${task.id}:`, error);
+          return { success: false as const, id: task.id, error };
         }
+      })
+    );
+
+    // Collect successful context cards
+    for (const result of contextResults) {
+      if (result.success) {
+        contextCards.push(result.card);
       }
     }
 

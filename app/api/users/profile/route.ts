@@ -75,6 +75,19 @@ export async function GET(request: NextRequest) {
         inStateVsOutOfState: profile.in_state_vs_out_of_state,
         // Benefits
         currentBenefits: profile.current_benefits,
+        // Assets
+        retirementAccounts: profile.retirement_accounts,
+        investmentAccounts: profile.investment_accounts,
+        homeEquity: profile.home_equity,
+        // Life Plans
+        planningHomePurchase: profile.planning_home_purchase,
+        planningRetirementSoon: profile.planning_retirement_soon,
+        planningChildren: profile.planning_children,
+        planningStartBusiness: profile.planning_start_business,
+        // Work Details
+        isGigWorker: profile.is_gig_worker,
+        isUnionMember: profile.is_union_member,
+        isSmallBusinessOwner: profile.is_small_business_owner,
       },
       completeness,
       missingFields: completenessFields.filter(f => profile[f] === null || profile[f] === undefined),
@@ -122,8 +135,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
+    // Filter out null values (convert to undefined for Zod optional fields)
+    const cleanedBody = Object.fromEntries(
+      Object.entries(body).filter(([, value]) => value !== null)
+    );
+
     // Validate with Zod schema
-    const parseResult = UserProfileSchema.safeParse(body);
+    const parseResult = UserProfileSchema.safeParse(cleanedBody);
     if (!parseResult.success) {
       return NextResponse.json(
         { error: 'Invalid profile data', details: parseResult.error.flatten() },
@@ -158,6 +176,19 @@ export async function POST(request: NextRequest) {
       institution_type: profileData.institution_type,
       in_state_vs_out_of_state: profileData.in_state_vs_out_of_state,
       current_benefits: profileData.current_benefits,
+      // Assets
+      retirement_accounts: profileData.retirement_accounts,
+      investment_accounts: profileData.investment_accounts,
+      home_equity: profileData.home_equity,
+      // Life Plans
+      planning_home_purchase: profileData.planning_home_purchase,
+      planning_retirement_soon: profileData.planning_retirement_soon,
+      planning_children: profileData.planning_children,
+      planning_start_business: profileData.planning_start_business,
+      // Work Details
+      is_gig_worker: profileData.is_gig_worker,
+      is_union_member: profileData.is_union_member,
+      is_small_business_owner: profileData.is_small_business_owner,
     };
 
     const { data: profile, error } = await supabase
@@ -207,8 +238,13 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
+    // Filter out null values (convert to undefined for Zod optional fields)
+    const cleanedBody = Object.fromEntries(
+      Object.entries(body).filter(([, value]) => value !== null)
+    );
+
     // Validate with Zod schema
-    const parseResult = UserProfileSchema.safeParse(body);
+    const parseResult = UserProfileSchema.safeParse(cleanedBody);
     if (!parseResult.success) {
       return NextResponse.json(
         { error: 'Invalid profile data', details: parseResult.error.flatten() },
@@ -256,6 +292,19 @@ export async function PUT(request: NextRequest) {
     if (profileData.institution_type !== undefined) dbRecord.institution_type = profileData.institution_type;
     if (profileData.in_state_vs_out_of_state !== undefined) dbRecord.in_state_vs_out_of_state = profileData.in_state_vs_out_of_state;
     if (profileData.current_benefits !== undefined) dbRecord.current_benefits = profileData.current_benefits;
+    // Assets
+    if (profileData.retirement_accounts !== undefined) dbRecord.retirement_accounts = profileData.retirement_accounts;
+    if (profileData.investment_accounts !== undefined) dbRecord.investment_accounts = profileData.investment_accounts;
+    if (profileData.home_equity !== undefined) dbRecord.home_equity = profileData.home_equity;
+    // Life Plans
+    if (profileData.planning_home_purchase !== undefined) dbRecord.planning_home_purchase = profileData.planning_home_purchase;
+    if (profileData.planning_retirement_soon !== undefined) dbRecord.planning_retirement_soon = profileData.planning_retirement_soon;
+    if (profileData.planning_children !== undefined) dbRecord.planning_children = profileData.planning_children;
+    if (profileData.planning_start_business !== undefined) dbRecord.planning_start_business = profileData.planning_start_business;
+    // Work Details
+    if (profileData.is_gig_worker !== undefined) dbRecord.is_gig_worker = profileData.is_gig_worker;
+    if (profileData.is_union_member !== undefined) dbRecord.is_union_member = profileData.is_union_member;
+    if (profileData.is_small_business_owner !== undefined) dbRecord.is_small_business_owner = profileData.is_small_business_owner;
 
     const { error } = await supabase
       .from('user_profiles')

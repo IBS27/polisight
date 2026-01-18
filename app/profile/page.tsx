@@ -91,6 +91,19 @@ export default function ProfilePage() {
         institution_type: profileData.institutionType,
         in_state_vs_out_of_state: profileData.inStateVsOutOfState,
         current_benefits: profileData.currentBenefits,
+        // Assets
+        retirement_accounts: profileData.retirementAccounts,
+        investment_accounts: profileData.investmentAccounts,
+        home_equity: profileData.homeEquity,
+        // Life Plans
+        planning_home_purchase: profileData.planningHomePurchase,
+        planning_retirement_soon: profileData.planningRetirementSoon,
+        planning_children: profileData.planningChildren,
+        planning_start_business: profileData.planningStartBusiness,
+        // Work Details
+        is_gig_worker: profileData.isGigWorker,
+        is_union_member: profileData.isUnionMember,
+        is_small_business_owner: profileData.isSmallBusinessOwner,
       };
 
       const res = await fetch('/api/users/profile', {

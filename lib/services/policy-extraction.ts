@@ -116,10 +116,26 @@ IMPORTANT - Valid enum values (you MUST use ONLY these exact values):
   - Use "burden" when positive formula result = user PAYS MORE (tax increases, fees, penalties)
 
 Option 1 - "extracted": Use when you find specific, quantifiable parameters
-- Include calculation formulas using profile fields like: household_income, individual_income, age, state, household_size, filing_status
+- Include calculation formulas using available profile fields:
+  * Income: household_income, individual_income
+  * Demographics: age, state, household_size
+  * Tax: tax_filing_status
+  * Housing: rent_vs_own, annual_housing_payment, home_equity
+  * Debt: student_loan_balance, other_debts
+  * Assets: retirement_accounts, investment_accounts
+  * Life Plans (0/1): planning_home_purchase, planning_retirement_soon, planning_children, planning_start_business
+  * Work (0/1): is_gig_worker, is_union_member, is_small_business_owner
 - Example formula: "household_income * 0.02" or "max(0, 12000 - household_income * 0.05)"
 
-Example JSON for Option 1 (tax cut = benefit):
+MULTIPLE FORMULAS: Generate multiple calculation formulas when appropriate to show different impact dimensions:
+1. Primary impact (dollars) - the main financial effect
+2. Impact as percentage of income (if income-related): "primary_result / household_income * 100"
+3. Monthly equivalent (for annual impacts): "primary_result / 12"
+4. Comparison metrics (e.g., days of work, months of rent equivalent)
+
+Each formula after the first can reference previous formula results by their formulaId.
+
+Example JSON for Option 1 (tax cut = benefit, with multiple dimensions):
 {
   "extractionStatus": "extracted",
   "policyType": "tax_change",
@@ -128,15 +144,35 @@ Example JSON for Option 1 (tax cut = benefit):
     "incomeBrackets": [{"minIncome": 0, "maxIncome": 50000, "currentRate": 0.10, "newRate": 0.08}],
     "taxType": "income"
   },
-  "calculationFormulas": [{
-    "formulaId": "tax_savings",
-    "name": "Tax Savings",
-    "description": "Annual tax savings from rate reduction",
-    "expression": "household_income * 0.02",
-    "requiredInputs": ["household_income"],
-    "outputUnit": "dollars",
-    "impactSemantics": "benefit"
-  }],
+  "calculationFormulas": [
+    {
+      "formulaId": "tax_savings",
+      "name": "Annual Tax Savings",
+      "description": "Annual tax savings from rate reduction",
+      "expression": "household_income * 0.02",
+      "requiredInputs": ["household_income"],
+      "outputUnit": "dollars",
+      "impactSemantics": "benefit"
+    },
+    {
+      "formulaId": "percent_of_income",
+      "name": "Savings as % of Income",
+      "description": "Tax savings as percentage of household income",
+      "expression": "tax_savings / household_income * 100",
+      "requiredInputs": ["household_income"],
+      "outputUnit": "percentage",
+      "impactSemantics": "benefit"
+    },
+    {
+      "formulaId": "monthly_savings",
+      "name": "Monthly Savings",
+      "description": "Monthly equivalent of annual tax savings",
+      "expression": "tax_savings / 12",
+      "requiredInputs": ["household_income"],
+      "outputUnit": "dollars",
+      "impactSemantics": "benefit"
+    }
+  ],
   "sourceSentenceIndices": [1, 5, 12]
 }
 

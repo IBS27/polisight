@@ -24,6 +24,19 @@ const FIELD_LABELS: Record<string, string> = {
   rent_vs_own: 'Housing Status',
   annual_housing_payment: 'Annual Housing Payment',
   student_loan_balance: 'Student Loan Balance',
+  // Assets
+  retirement_accounts: 'Retirement Accounts',
+  investment_accounts: 'Investment Accounts',
+  home_equity: 'Home Equity',
+  // Life Plans
+  planning_home_purchase: 'Planning Home Purchase',
+  planning_retirement_soon: 'Planning Retirement Soon',
+  planning_children: 'Planning Children',
+  planning_start_business: 'Planning to Start Business',
+  // Work Details
+  is_gig_worker: 'Gig Worker',
+  is_union_member: 'Union Member',
+  is_small_business_owner: 'Small Business Owner',
 };
 
 // ============================================
@@ -320,15 +333,15 @@ function checkRequiredInputs(
 function extractProfileVariables(profile: UserProfile): Record<string, number | string> {
   const variables: Record<string, number | string> = {};
 
-  // Numeric fields
-  if (profile.household_income !== undefined) variables.household_income = profile.household_income;
-  if (profile.individual_income !== undefined) variables.individual_income = profile.individual_income;
-  if (profile.age !== undefined) variables.age = profile.age;
-  if (profile.household_size !== undefined) variables.household_size = profile.household_size;
-  if (profile.annual_housing_payment !== undefined) variables.annual_housing_payment = profile.annual_housing_payment;
-  if (profile.student_loan_balance !== undefined) variables.student_loan_balance = profile.student_loan_balance;
-  if (profile.other_debts !== undefined) variables.other_debts = profile.other_debts;
-  if (profile.dependents_covered !== undefined) variables.dependents_covered = profile.dependents_covered;
+  // Numeric fields (check for both null and undefined with != null)
+  if (profile.household_income != null) variables.household_income = profile.household_income;
+  if (profile.individual_income != null) variables.individual_income = profile.individual_income;
+  if (profile.age != null) variables.age = profile.age;
+  if (profile.household_size != null) variables.household_size = profile.household_size;
+  if (profile.annual_housing_payment != null) variables.annual_housing_payment = profile.annual_housing_payment;
+  if (profile.student_loan_balance != null) variables.student_loan_balance = profile.student_loan_balance;
+  if (profile.other_debts != null) variables.other_debts = profile.other_debts;
+  if (profile.dependents_covered != null) variables.dependents_covered = profile.dependents_covered;
 
   // String fields (for conditional logic)
   if (profile.state) variables.state = profile.state;
@@ -337,6 +350,22 @@ function extractProfileVariables(profile: UserProfile): Record<string, number | 
   if (profile.insurance_status) variables.insurance_status = profile.insurance_status;
   if (profile.student_status) variables.student_status = profile.student_status;
   if (profile.rent_vs_own) variables.rent_vs_own = profile.rent_vs_own;
+
+  // Asset fields
+  if (profile.retirement_accounts != null) variables.retirement_accounts = profile.retirement_accounts;
+  if (profile.investment_accounts != null) variables.investment_accounts = profile.investment_accounts;
+  if (profile.home_equity != null) variables.home_equity = profile.home_equity;
+
+  // Life plan fields (as 1/0 for formula use)
+  if (profile.planning_home_purchase != null) variables.planning_home_purchase = profile.planning_home_purchase ? 1 : 0;
+  if (profile.planning_retirement_soon != null) variables.planning_retirement_soon = profile.planning_retirement_soon ? 1 : 0;
+  if (profile.planning_children != null) variables.planning_children = profile.planning_children ? 1 : 0;
+  if (profile.planning_start_business != null) variables.planning_start_business = profile.planning_start_business ? 1 : 0;
+
+  // Work detail fields (as 1/0 for formula use)
+  if (profile.is_gig_worker != null) variables.is_gig_worker = profile.is_gig_worker ? 1 : 0;
+  if (profile.is_union_member != null) variables.is_union_member = profile.is_union_member ? 1 : 0;
+  if (profile.is_small_business_owner != null) variables.is_small_business_owner = profile.is_small_business_owner ? 1 : 0;
 
   return variables;
 }
@@ -377,8 +406,14 @@ export function calculateImpact(
   // Extract variables from profile
   const variables = extractProfileVariables(profile);
 
-  // Build calculation steps
+  // Build calculation steps and additional dimensions
   const steps: CalculationStep[] = [];
+  const additionalDimensions: Array<{
+    name: string;
+    value: number;
+    unit: 'dollars' | 'percentage' | 'boolean';
+    description: string;
+  }> = [];
   let finalResult: number | null = null;
 
   // Execute each formula
@@ -408,9 +443,17 @@ export function calculateImpact(
       unit: formula.outputUnit,
     });
 
-    // Last formula result is the final result
-    if (i === formulas.length - 1) {
+    // First formula is primary, rest are additional dimensions
+    if (i === 0) {
       finalResult = result;
+    } else {
+      // Add to additional dimensions
+      additionalDimensions.push({
+        name: formula.name,
+        value: Math.round(result * 100) / 100,
+        unit: formula.outputUnit,
+        description: formula.description,
+      });
     }
   }
 
@@ -462,6 +505,17 @@ export function calculateImpact(
     });
   }
 
+  // Build context for more meaningful interpretation
+  const context = {
+    asPercentageOfIncome: profile.household_income
+      ? Math.round((Math.abs(finalResult) / profile.household_income) * 10000) / 100
+      : null,
+    monthlyEquivalent: Math.round((finalResult / 12) * 100) / 100,
+    monthsOfHousingPayment: profile.annual_housing_payment
+      ? Math.round((Math.abs(finalResult) / (profile.annual_housing_payment / 12)) * 100) / 100
+      : null,
+  };
+
   return {
     calculationStatus: 'computed',
     primaryImpactValue: Math.round(finalResult * 100) / 100,
@@ -478,6 +532,8 @@ export function calculateImpact(
     },
     caveats,
     confidenceLevel: caveats.length === 0 ? 0.9 : 0.7,
+    context,
+    additionalDimensions: additionalDimensions.length > 0 ? additionalDimensions : undefined,
   };
 }
 
