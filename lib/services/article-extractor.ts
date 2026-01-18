@@ -4,7 +4,8 @@
 // ============================================
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-// Use :online suffix to enable OpenRouter's web search plugin for live URL fetching
+// Use :online suffix + tools parameter to enable xAI's native agentic web_search
+// This allows the model to autonomously browse URLs and make follow-up queries
 const EXTRACTION_MODEL = 'x-ai/grok-4.1-fast:online';
 
 // ============================================
@@ -98,6 +99,10 @@ Important:
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
+        tools: [{ type: 'web_search' }],
+        web_search_options: {
+          search_context_size: 'high'
+        },
         temperature: 0.1,
         max_tokens: 16000,
         response_format: { type: 'json_object' },
