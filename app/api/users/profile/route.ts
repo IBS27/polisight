@@ -3,27 +3,27 @@ import { createClient } from '@/lib/supabase/server';
 import { UserProfileSchema } from '@/lib/schemas/core';
 
 // ============================================
-// GET /api/users/profile - Get user profile by ID (from header or query)
+// GET /api/users/profile - Get user profile for authenticated user
 // ============================================
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const profileId = searchParams.get('id') || request.headers.get('x-profile-id');
+    const supabase = await createClient();
 
-    if (!profileId) {
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json(
-        { error: 'Profile ID required (query param "id" or header "x-profile-id")' },
-        { status: 400 }
+        { error: 'Authentication required' },
+        { status: 401 }
       );
     }
-
-    const supabase = await createClient();
 
     const { data: profile, error } = await supabase
       .from('user_profiles')
       .select('*')
-      .eq('id', profileId)
+      .eq('user_id', user.id)
       .single();
 
     if (error || !profile) {
@@ -89,11 +89,37 @@ export async function GET(request: NextRequest) {
 }
 
 // ============================================
-// POST /api/users/profile - Create new profile
+// POST /api/users/profile - Create new profile for authenticated user
 // ============================================
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Check if user already has a profile
+    const { data: existingProfile } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingProfile) {
+      return NextResponse.json(
+        { error: 'Profile already exists', id: existingProfile.id },
+        { status: 409 }
+      );
+    }
+
     const body = await request.json();
 
     // Validate with Zod schema
@@ -107,10 +133,9 @@ export async function POST(request: NextRequest) {
 
     const profileData = parseResult.data;
 
-    const supabase = await createClient();
-
     // Convert camelCase to snake_case for database
     const dbRecord = {
+      user_id: user.id,
       age: profileData.age,
       state: profileData.state,
       city: profileData.city,
@@ -163,18 +188,20 @@ export async function POST(request: NextRequest) {
 }
 
 // ============================================
-// PUT /api/users/profile - Update profile
+// PUT /api/users/profile - Update profile for authenticated user
 // ============================================
 
 export async function PUT(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const profileId = searchParams.get('id') || request.headers.get('x-profile-id');
+    const supabase = await createClient();
 
-    if (!profileId) {
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json(
-        { error: 'Profile ID required (query param "id" or header "x-profile-id")' },
-        { status: 400 }
+        { error: 'Authentication required' },
+        { status: 401 }
       );
     }
 
@@ -191,18 +218,16 @@ export async function PUT(request: NextRequest) {
 
     const profileData = parseResult.data;
 
-    const supabase = await createClient();
-
-    // Check if profile exists
+    // Check if profile exists for this user
     const { data: existing } = await supabase
       .from('user_profiles')
       .select('id')
-      .eq('id', profileId)
+      .eq('user_id', user.id)
       .single();
 
     if (!existing) {
       return NextResponse.json(
-        { error: 'Profile not found' },
+        { error: 'Profile not found. Create one first.' },
         { status: 404 }
       );
     }
@@ -235,7 +260,7 @@ export async function PUT(request: NextRequest) {
     const { error } = await supabase
       .from('user_profiles')
       .update(dbRecord)
-      .eq('id', profileId);
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Failed to update profile:', error);
@@ -246,7 +271,7 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({
-      id: profileId,
+      id: existing.id,
       message: 'Profile updated successfully',
     });
   } catch (error) {

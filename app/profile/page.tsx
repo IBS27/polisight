@@ -1,54 +1,51 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { signInWithGoogle } from '@/lib/supabase/auth';
 import { ProfileForm } from '@/components/profile/ProfileForm';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Save, Loader2, CheckCircle, User } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowLeft, Save, Loader2, CheckCircle, User, LogIn } from 'lucide-react';
 
-// Loading fallback component
-function ProfileLoading() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-    </div>
-  );
-}
-
-// Main profile content component
-function ProfileContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const profileId = searchParams.get('id');
+export default function ProfilePage() {
+  const { user, isLoading: authLoading } = useAuth();
 
   const [profileData, setProfileData] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentProfileId, setCurrentProfileId] = useState<string | null>(profileId);
+  const [hasProfile, setHasProfile] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
-  // Load existing profile if ID provided
+  // Load existing profile when user is authenticated
   useEffect(() => {
-    if (profileId) {
-      loadProfile(profileId);
+    if (user) {
+      loadProfile();
     }
-  }, [profileId]);
+  }, [user]);
 
-  const loadProfile = async (id: string) => {
+  const loadProfile = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const res = await fetch(`/api/users/profile?id=${id}`);
+      const res = await fetch('/api/users/profile');
       if (res.ok) {
         const data = await res.json();
         setProfileData(data.profile || {});
-        setCurrentProfileId(id);
+        setHasProfile(true);
+      } else if (res.status === 404) {
+        // No profile yet, that's okay
+        setHasProfile(false);
+        setProfileData({});
+      } else if (res.status === 401) {
+        // Not authenticated
+        setError('Please sign in to view your profile');
       } else {
-        setError('Profile not found');
+        setError('Failed to load profile');
       }
     } catch (err) {
       setError('Failed to load profile');
@@ -58,15 +55,17 @@ function ProfileContent() {
   };
 
   const saveProfile = async () => {
+    if (!user) {
+      setError('Please sign in to save your profile');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
     setSaveSuccess(false);
 
     try {
-      const method = currentProfileId ? 'PUT' : 'POST';
-      const url = currentProfileId
-        ? `/api/users/profile?id=${currentProfileId}`
-        : '/api/users/profile';
+      const method = hasProfile ? 'PUT' : 'POST';
 
       // Convert camelCase to snake_case for API
       const apiData = {
@@ -94,7 +93,7 @@ function ProfileContent() {
         current_benefits: profileData.currentBenefits,
       };
 
-      const res = await fetch(url, {
+      const res = await fetch('/api/users/profile', {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(apiData),
@@ -106,18 +105,23 @@ function ProfileContent() {
         throw new Error(data.error || 'Failed to save profile');
       }
 
-      // Update URL with new profile ID if created
-      if (!currentProfileId && data.id) {
-        setCurrentProfileId(data.id);
-        router.replace(`/profile?id=${data.id}`);
-      }
-
+      setHasProfile(true);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save profile');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSignIn = async () => {
+    setIsSigningIn(true);
+    try {
+      await signInWithGoogle('/profile');
+    } catch (error) {
+      console.error('Sign in failed:', error);
+      setIsSigningIn(false);
     }
   };
 
@@ -130,9 +134,48 @@ function ProfileContent() {
   const filledFields = completenessFields.filter(f => profileData[f] !== undefined && profileData[f] !== '');
   const completeness = Math.round((filledFields.length / completenessFields.length) * 100);
 
+  // Auth loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  // Not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-6 max-w-3xl">
+          <Card className="text-center py-12">
+            <CardContent>
+              <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+                Sign in to manage your profile
+              </h1>
+              <p className="text-gray-500 mb-6">
+                Your profile helps calculate how policies affect you personally.
+              </p>
+              <Button onClick={handleSignIn} disabled={isSigningIn} size="lg">
+                {isSigningIn ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <LogIn className="w-4 h-4 mr-2" />
+                )}
+                Sign in with Google
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Profile loading
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
       </div>
     );
@@ -221,14 +264,5 @@ function ProfileContent() {
         </p>
       </div>
     </div>
-  );
-}
-
-// Page wrapper with Suspense boundary
-export default function ProfilePage() {
-  return (
-    <Suspense fallback={<ProfileLoading />}>
-      <ProfileContent />
-    </Suspense>
   );
 }

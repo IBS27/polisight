@@ -139,6 +139,16 @@ export default function ArticleAnalysisPage({
     fetchArticle();
   }, [articleId]);
 
+  // Track article view for authenticated users
+  useEffect(() => {
+    if (data && articleId) {
+      // Fire and forget - don't await
+      fetch(`/api/articles/${articleId}/view`, { method: 'POST' }).catch(() => {
+        // Silently ignore tracking errors
+      });
+    }
+  }, [data, articleId]);
+
   const fetchArticle = async () => {
     setIsLoading(true);
     setError(null);
