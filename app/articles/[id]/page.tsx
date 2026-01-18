@@ -7,6 +7,7 @@ import { ArgumentSidebar, type TabType } from '@/components/analysis/ArgumentSid
 import { OmissionsPanel } from '@/components/omissions/OmissionsPanel';
 import { ContextCardsPanel } from '@/components/context/ContextCardsPanel';
 import { PersonalImpactSection } from '@/components/impact/PersonalImpactSection';
+import { ImpactBulletsList, type ImpactBulletsData } from '@/components/impact/ImpactBulletsList';
 import { ProvenanceDrawer } from '@/components/provenance/ProvenanceDrawer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -140,6 +141,13 @@ export default function ArticleAnalysisPage({
   const [impactData, setImpactData] = useState<Record<string, unknown> | null>(null);
   const [isCalculatingImpact, setIsCalculatingImpact] = useState(false);
 
+  // Impact bullets state (new LLM-based system)
+  const [impactBulletsData, setImpactBulletsData] = useState<ImpactBulletsData | null>(null);
+  const [isCalculatingBullets, setIsCalculatingBullets] = useState(false);
+
+  // Feature flag for bullet-based impact (set via environment variable)
+  const useBulletImpact = process.env.NEXT_PUBLIC_USE_BULLET_IMPACT === 'true';
+
   // Fetch article data
   useEffect(() => {
     fetchArticle();
@@ -176,8 +184,10 @@ export default function ArticleAnalysisPage({
     fetchProfile();
   }, []);
 
-  // Fetch existing impact calculation when profile and policy params are available
+  // Fetch existing impact calculation when profile and policy params are available (old system)
   useEffect(() => {
+    if (useBulletImpact) return; // Skip if using bullet system
+
     const fetchImpact = async () => {
       if (!profileId || !data?.policyParameters?.id) return;
 
@@ -196,7 +206,34 @@ export default function ArticleAnalysisPage({
       }
     };
     fetchImpact();
-  }, [profileId, data?.policyParameters?.id, articleId]);
+  }, [profileId, data?.policyParameters?.id, articleId, useBulletImpact]);
+
+  // Fetch existing impact bullets when profile is available (new system)
+  useEffect(() => {
+    if (!useBulletImpact) return; // Skip if using old system
+
+    const fetchBullets = async () => {
+      if (!profileId) return;
+
+      try {
+        const res = await fetch(
+          `/api/articles/${articleId}/impact-bullets?userProfileId=${profileId}`
+        );
+        if (res.ok) {
+          const result = await res.json();
+          if (result.exists) {
+            setImpactBulletsData({
+              bullets: result.bullets,
+              summary: result.summary,
+            });
+          }
+        }
+      } catch {
+        // Silently ignore - user can manually calculate
+      }
+    };
+    fetchBullets();
+  }, [profileId, articleId, useBulletImpact]);
 
   const fetchArticle = async () => {
     setIsLoading(true);
@@ -268,7 +305,7 @@ export default function ArticleAnalysisPage({
     }
   };
 
-  // Calculate personal impact
+  // Calculate personal impact (old formula-based system)
   const calculateImpact = async () => {
     if (!profileId || !data?.policyParameters?.id) return;
 
@@ -293,6 +330,36 @@ export default function ArticleAnalysisPage({
       console.error('Impact calculation failed:', err);
     } finally {
       setIsCalculatingImpact(false);
+    }
+  };
+
+  // Calculate impact bullets (new LLM-based system)
+  const calculateImpactBullets = async () => {
+    if (!profileId) return;
+
+    setIsCalculatingBullets(true);
+    try {
+      const res = await fetch(`/api/articles/${articleId}/impact-bullets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userProfileId: profileId,
+        }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        setImpactBulletsData({
+          bullets: result.bullets,
+          summary: result.summary,
+        });
+      } else {
+        console.error('Impact bullets generation failed:', await res.text());
+      }
+    } catch (err) {
+      console.error('Impact bullets generation failed:', err);
+    } finally {
+      setIsCalculatingBullets(false);
     }
   };
 
@@ -536,13 +603,23 @@ export default function ArticleAnalysisPage({
 
           {/* Personal Impact Section - columns 1-2, rows 10-15 (2/5 of height) */}
           <div className="lg:col-span-2 lg:row-start-10 lg:row-span-6 min-h-0">
-            <PersonalImpactSection
-              data={impactData as any}
-              isLoading={isCalculatingImpact}
-              hasProfile={hasProfile}
-              profileId={profileId || undefined}
-              onCalculate={calculateImpact}
-            />
+            {useBulletImpact ? (
+              <ImpactBulletsList
+                data={impactBulletsData}
+                isLoading={isCalculatingBullets}
+                hasProfile={hasProfile}
+                profileId={profileId || undefined}
+                onCalculate={calculateImpactBullets}
+              />
+            ) : (
+              <PersonalImpactSection
+                data={impactData as any}
+                isLoading={isCalculatingImpact}
+                hasProfile={hasProfile}
+                profileId={profileId || undefined}
+                onCalculate={calculateImpact}
+              />
+            )}
           </div>
 
           {/* Argument Elements - column 3, rows 1-5 (1/3 of height) */}
