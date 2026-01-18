@@ -66,7 +66,7 @@ export function ContextCardsPanel({ contextCards }: ContextCardsPanelProps) {
 
       {/* Claims Context */}
       {claimCards.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h4 className="text-xs font-medium text-blue-600">For Claims</h4>
           {claimCards.map((card) => (
             <ContextCard
@@ -84,7 +84,7 @@ export function ContextCardsPanel({ contextCards }: ContextCardsPanelProps) {
 
       {/* Assumptions Context */}
       {assumptionCards.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h4 className="text-xs font-medium text-amber-600">For Assumptions</h4>
           {assumptionCards.map((card) => (
             <ContextCard
@@ -102,7 +102,7 @@ export function ContextCardsPanel({ contextCards }: ContextCardsPanelProps) {
 
       {/* Omissions Context */}
       {omissionCards.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h4 className="text-xs font-medium text-orange-600">For Omissions</h4>
           {omissionCards.map((card) => (
             <ContextCard
@@ -120,7 +120,7 @@ export function ContextCardsPanel({ contextCards }: ContextCardsPanelProps) {
 
       {/* General Context */}
       {generalCards.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h4 className="text-xs font-medium text-gray-600">General Background</h4>
           {generalCards.map((card) => (
             <ContextCard

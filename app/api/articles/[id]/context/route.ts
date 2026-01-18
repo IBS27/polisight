@@ -77,7 +77,7 @@ export async function POST(
           const card = {
             contextFor: elementType,
             relatedElementId: element.id,
-            title: `Context: ${element.content.substring(0, 50)}...`,
+            title: element.content,
             summary: contextData.content.substring(0, 500),
             keyFacts,
             citations: contextData.citations.map(c => ({
@@ -115,7 +115,7 @@ export async function POST(
           const card = {
             contextFor: 'omission',
             relatedElementId: omission.id,
-            title: `Missing Context: ${omission.omission_type}`,
+            title: omission.omission_type,
             summary: contextData.content.substring(0, 500),
             keyFacts,
             citations: contextData.citations.map(c => ({

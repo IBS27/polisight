@@ -452,7 +452,7 @@ export default function ArticleAnalysisPage({
             </div>
 
             {/* Context Cards */}
-            <div className="bg-white rounded-lg shadow p-4 max-h-64 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow p-4 max-h-80 overflow-y-auto">
               <ContextCardsPanel contextCards={data.contextCards} />
             </div>
           </div>

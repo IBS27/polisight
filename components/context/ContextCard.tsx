@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, ExternalLink, BookOpen } from 'lucide-react';
+import { ChevronDown, ExternalLink, BookOpen } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // ============================================
 // Types
@@ -61,104 +61,81 @@ export function ContextCard({
   keyFacts,
   citations,
 }: ContextCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2 pt-3 px-4">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <Badge className={contextColors[contextFor]} variant="secondary">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className="border rounded-lg bg-white overflow-hidden">
+        {/* Collapsed header - always visible */}
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left">
+            <Badge className={cn(contextColors[contextFor], 'text-xs shrink-0')} variant="secondary">
               {contextLabels[contextFor]}
             </Badge>
-            <CardTitle className="text-sm font-medium mt-2 line-clamp-2">
+            <span className={cn(
+              'text-sm text-gray-800 flex-1 min-w-0',
+              isOpen ? 'whitespace-normal' : 'truncate'
+            )}>
               {title}
-            </CardTitle>
-          </div>
-        </div>
-      </CardHeader>
+            </span>
+            <ChevronDown className={cn(
+              'w-4 h-4 text-gray-400 transition-transform shrink-0',
+              isOpen && 'rotate-180'
+            )} />
+          </button>
+        </CollapsibleTrigger>
 
-      <CardContent className="px-4 pb-3">
-        {/* Summary */}
-        <p className={`text-sm text-gray-600 ${isExpanded ? '' : 'line-clamp-3'}`}>
-          {summary}
-        </p>
+        {/* Expandable content */}
+        <CollapsibleContent>
+          <div className="px-3 pb-3 border-t border-gray-100 space-y-2">
+            {/* Summary */}
+            <p className="text-sm text-gray-600 pt-2">{summary}</p>
 
-        {/* Expand/Collapse */}
-        {summary.length > 200 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-1 h-6 px-2 text-xs"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="w-3 h-3 mr-1" />
-                Show less
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-3 h-3 mr-1" />
-                Show more
-              </>
+            {/* Key Facts - compact */}
+            {keyFacts.length > 0 && (
+              <div className="text-xs">
+                <h4 className="font-medium text-gray-500 mb-1 flex items-center gap-1">
+                  <BookOpen className="w-3 h-3" />
+                  Key Facts
+                </h4>
+                <ul className="space-y-0.5 pl-1">
+                  {keyFacts.map((fact, idx) => (
+                    <li key={idx} className="text-gray-600 flex items-start gap-1">
+                      <span className="text-gray-400">•</span>
+                      <span>
+                        {fact.fact}
+                        <sup className="text-blue-500 ml-0.5">[{fact.citationIndex + 1}]</sup>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
-          </Button>
-        )}
 
-        {/* Key Facts */}
-        {keyFacts.length > 0 && (
-          <div className="mt-3">
-            <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
-              <BookOpen className="w-3 h-3" />
-              Key Facts
-            </h4>
-            <ul className="space-y-1">
-              {keyFacts.map((fact, idx) => (
-                <li key={idx} className="text-xs text-gray-700 flex items-start gap-1">
-                  <span className="text-gray-400 mt-0.5">•</span>
-                  <span>
-                    {fact.fact}
-                    <sup className="text-blue-500 ml-0.5">
-                      [{fact.citationIndex + 1}]
-                    </sup>
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {/* Sources - compact inline */}
+            {citations.length > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <h4 className="text-xs font-medium text-gray-500 mb-1">Sources</h4>
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                  {citations.map((citation, idx) => (
+                    <a
+                      key={idx}
+                      href={citation.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-0.5 text-xs text-blue-600 hover:underline"
+                    >
+                      <span className="text-gray-400">[{idx + 1}]</span>
+                      <span>{citation.domain}</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Citations */}
-        {citations.length > 0 && (
-          <div className="mt-3 pt-2 border-t">
-            <h4 className="text-xs font-medium text-gray-500 mb-2">Sources</h4>
-            <div className="space-y-1">
-              {citations.slice(0, isExpanded ? undefined : 3).map((citation, idx) => (
-                <a
-                  key={idx}
-                  href={citation.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                >
-                  <span className="text-gray-400">[{idx + 1}]</span>
-                  <span className="truncate flex-1">{citation.title || citation.domain}</span>
-                  <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                </a>
-              ))}
-              {!isExpanded && citations.length > 3 && (
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="text-xs text-gray-500 hover:text-gray-700"
-                >
-                  +{citations.length - 3} more sources
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }
