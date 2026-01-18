@@ -39,8 +39,8 @@ export function OmissionsPanel({ omissions, onSentenceClick }: OmissionsPanelPro
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between mb-2">
+    <div className="space-y-2">
+      <div className="flex items-center justify-between mb-1">
         <h3 className="text-sm font-medium text-gray-700">
           Potential Omissions ({omissions.length})
         </h3>
@@ -59,7 +59,7 @@ export function OmissionsPanel({ omissions, onSentenceClick }: OmissionsPanelPro
         />
       ))}
 
-      <p className="text-xs text-gray-500 mt-4">
+      <p className="text-xs text-gray-500 mt-2">
         Omissions are areas where the article may lack important information.
         This is not necessarily a criticism—some omissions may be intentional or
         appropriate for the article&apos;s scope.
