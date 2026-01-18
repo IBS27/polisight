@@ -133,7 +133,6 @@ export default function ArticleAnalysisPage({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDetectingOmissions, setIsDetectingOmissions] = useState(false);
   const [isExpandingContext, setIsExpandingContext] = useState(false);
-  const [isExtractingParams, setIsExtractingParams] = useState(false);
 
   // Profile and impact state
   const [hasProfile, setHasProfile] = useState(false);
@@ -292,18 +291,6 @@ export default function ArticleAnalysisPage({
     }
   };
 
-  // Extract policy parameters
-  const extractParams = async () => {
-    setIsExtractingParams(true);
-    try {
-      await fetch(`/api/articles/${articleId}/parameters`, { method: 'POST' });
-      await fetchArticle();
-    } catch (err) {
-      console.error('Parameter extraction failed:', err);
-    } finally {
-      setIsExtractingParams(false);
-    }
-  };
 
   // Calculate personal impact (old formula-based system)
   const calculateImpact = async () => {
@@ -564,21 +551,6 @@ export default function ArticleAnalysisPage({
               Expand Context
             </Button>
 
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={extractParams}
-              disabled={isExtractingParams || !hasAnalysis}
-            >
-              {isExtractingParams ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : data.policyParameters ? (
-                <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-              ) : (
-                <Play className="w-4 h-4 mr-2" />
-              )}
-              Extract Policy Params
-            </Button>
           </div>
         </div>
       </div>
