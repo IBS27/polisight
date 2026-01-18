@@ -22,6 +22,96 @@ interface SentenceDisplayProps {
 }
 
 // ============================================
+// URL Detection
+// ============================================
+
+const URL_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+
+/**
+ * Cleans trailing punctuation from a URL that was likely part of surrounding text.
+ * Handles balanced parentheses (e.g., Wikipedia URLs can contain parens).
+ */
+function cleanUrlTrailingPunctuation(rawUrl: string): { url: string; trailingChars: string } {
+  let url = rawUrl;
+  let trailingChars = '';
+
+  // Keep stripping trailing punctuation until we have a clean URL
+  while (url.length > 0) {
+    const lastChar = url[url.length - 1];
+
+    // Common punctuation that appears after URLs in text
+    if ([',', '.', ';', ':', '!', '?'].includes(lastChar)) {
+      trailingChars = lastChar + trailingChars;
+      url = url.slice(0, -1);
+      continue;
+    }
+
+    // Handle closing brackets - only strip if unbalanced
+    if (lastChar === ')') {
+      const openCount = (url.match(/\(/g) || []).length;
+      const closeCount = (url.match(/\)/g) || []).length;
+      if (closeCount > openCount) {
+        trailingChars = lastChar + trailingChars;
+        url = url.slice(0, -1);
+        continue;
+      }
+    }
+
+    if (lastChar === ']') {
+      const openCount = (url.match(/\[/g) || []).length;
+      const closeCount = (url.match(/\]/g) || []).length;
+      if (closeCount > openCount) {
+        trailingChars = lastChar + trailingChars;
+        url = url.slice(0, -1);
+        continue;
+      }
+    }
+
+    // No more trailing punctuation to strip
+    break;
+  }
+
+  return { url, trailingChars };
+}
+
+function parseTextWithLinks(text: string): (string | { url: string; display: string })[] {
+  const parts: (string | { url: string; display: string })[] = [];
+  let lastIndex = 0;
+  let match;
+
+  // Create a new regex instance to avoid state issues with global flag
+  const regex = new RegExp(URL_REGEX.source, URL_REGEX.flags);
+
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before the URL
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    // Clean trailing punctuation from the matched URL
+    const { url: cleanedUrl, trailingChars } = cleanUrlTrailingPunctuation(match[0]);
+
+    // Add the URL - prefix www. URLs with https://
+    const href = cleanedUrl.startsWith('www.') ? `https://${cleanedUrl}` : cleanedUrl;
+    parts.push({ url: href, display: cleanedUrl });
+
+    // Add back the trailing punctuation as plain text
+    if (trailingChars) {
+      parts.push(trailingChars);
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [text];
+}
+
+// ============================================
 // Highlight Colors
 // ============================================
 
@@ -75,7 +165,22 @@ export function SentenceDisplay({
       data-sentence-index={index}
       data-highlight-types={highlights.map(h => h.type).join(',')}
     >
-      {text}{' '}
+      {parseTextWithLinks(text).map((part, i) =>
+        typeof part === 'string' ? (
+          part
+        ) : (
+          <a
+            key={i}
+            href={part.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline hover:text-blue-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part.display}
+          </a>
+        )
+      )}{' '}
     </span>
   );
 }
