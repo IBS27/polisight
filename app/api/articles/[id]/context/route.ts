@@ -116,7 +116,11 @@ export async function POST(
       citations: Array<{ url: string; title: string; domain: string; snippet?: string }>;
     }> = [];
 
-    // Note: We'll use atomic replace at the end instead of deleting here
+    // Delete existing context cards for this article (in case of re-analysis)
+    await supabase
+      .from('context_cards')
+      .delete()
+      .eq('article_id', articleId);
 
     // Build all context expansion tasks
     const contextTasks: Array<{
