@@ -622,7 +622,7 @@ export default function ArticleAnalysisPage({
             )}
           </div>
 
-          {/* Argument Elements - column 3, rows 1-5 (1/3 of height) */}
+          {/* Argument Elements - TEMPORARILY HIDDEN
           <div className="lg:col-start-3 lg:row-start-1 lg:row-span-5 bg-white rounded-lg shadow p-4 min-h-0 overflow-hidden flex flex-col">
             <h2 className="font-semibold text-gray-900 mb-3">
               Argument Elements ({data.counts.claims + data.counts.assumptions + data.counts.predictions + data.counts.values})
@@ -641,9 +641,10 @@ export default function ArticleAnalysisPage({
               />
             </div>
           </div>
+          */}
 
-          {/* Omissions - column 3, rows 6-10 (1/3 of height) */}
-          <div className="lg:col-start-3 lg:row-start-6 lg:row-span-5 bg-white rounded-lg shadow p-4 min-h-0 overflow-y-auto">
+          {/* Omissions - column 3, rows 1-8 (first half of column) */}
+          <div className="lg:col-start-3 lg:row-start-1 lg:row-span-8 bg-white rounded-lg shadow p-4 min-h-0 overflow-y-auto">
             <OmissionsPanel
               omissions={data.omissions.map(o => ({
                 ...o,
@@ -654,8 +655,8 @@ export default function ArticleAnalysisPage({
             />
           </div>
 
-          {/* Context Cards - column 3, rows 11-15 (1/3 of height) */}
-          <div className="lg:col-start-3 lg:row-start-11 lg:row-span-5 bg-white rounded-lg shadow p-4 min-h-0 overflow-y-auto">
+          {/* Context Cards - column 3, rows 9-15 (second half of column) */}
+          <div className="lg:col-start-3 lg:row-start-9 lg:row-span-7 bg-white rounded-lg shadow p-4 min-h-0 overflow-y-auto">
             <ContextCardsPanel contextCards={data.contextCards} />
           </div>
         </div>
