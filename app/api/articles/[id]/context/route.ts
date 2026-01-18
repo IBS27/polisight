@@ -78,7 +78,7 @@ export async function POST(
             contextFor: elementType,
             relatedElementId: element.id,
             title: element.content,
-            summary: contextData.content.substring(0, 500),
+            summary: contextData.content,
             keyFacts,
             citations: contextData.citations.map(c => ({
               url: c.url,
@@ -116,7 +116,7 @@ export async function POST(
             contextFor: 'omission',
             relatedElementId: omission.id,
             title: omission.omission_type,
-            summary: contextData.content.substring(0, 500),
+            summary: contextData.content,
             keyFacts,
             citations: contextData.citations.map(c => ({
               url: c.url,

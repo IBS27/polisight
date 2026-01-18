@@ -62,6 +62,10 @@ export const CalculationFormulaSchema = z.object({
   expression: z.string(), // e.g., "household_income * 0.02 - current_credit"
   requiredInputs: z.array(z.string()), // profile fields needed
   outputUnit: z.enum(['dollars', 'percentage', 'boolean']),
+  // Indicates what a positive result means for the user:
+  // - 'benefit': positive = user saves money or gains value (e.g., tax credits, subsidies)
+  // - 'burden': positive = user pays more or loses value (e.g., tax increases, fees)
+  impactSemantics: z.enum(['benefit', 'burden']).default('benefit'),
 });
 
 export type CalculationFormula = z.infer<typeof CalculationFormulaSchema>;

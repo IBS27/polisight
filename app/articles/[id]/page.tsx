@@ -134,6 +134,12 @@ export default function ArticleAnalysisPage({
   const [isExpandingContext, setIsExpandingContext] = useState(false);
   const [isExtractingParams, setIsExtractingParams] = useState(false);
 
+  // Profile and impact state
+  const [hasProfile, setHasProfile] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [impactData, setImpactData] = useState<Record<string, unknown> | null>(null);
+  const [isCalculatingImpact, setIsCalculatingImpact] = useState(false);
+
   // Fetch article data
   useEffect(() => {
     fetchArticle();
@@ -148,6 +154,49 @@ export default function ArticleAnalysisPage({
       });
     }
   }, [data, articleId]);
+
+  // Fetch user profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/users/profile');
+        if (res.ok) {
+          const profileData = await res.json();
+          setHasProfile(true);
+          setProfileId(profileData.profile.id);
+        } else {
+          setHasProfile(false);
+          setProfileId(null);
+        }
+      } catch {
+        setHasProfile(false);
+        setProfileId(null);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  // Fetch existing impact calculation when profile and policy params are available
+  useEffect(() => {
+    const fetchImpact = async () => {
+      if (!profileId || !data?.policyParameters?.id) return;
+
+      try {
+        const res = await fetch(
+          `/api/articles/${articleId}/impact?userProfileId=${profileId}`
+        );
+        if (res.ok) {
+          const impactResult = await res.json();
+          if (impactResult.exists) {
+            setImpactData(impactResult);
+          }
+        }
+      } catch {
+        // Silently ignore - user can manually calculate
+      }
+    };
+    fetchImpact();
+  }, [profileId, data?.policyParameters?.id, articleId]);
 
   const fetchArticle = async () => {
     setIsLoading(true);
@@ -216,6 +265,34 @@ export default function ArticleAnalysisPage({
       console.error('Parameter extraction failed:', err);
     } finally {
       setIsExtractingParams(false);
+    }
+  };
+
+  // Calculate personal impact
+  const calculateImpact = async () => {
+    if (!profileId || !data?.policyParameters?.id) return;
+
+    setIsCalculatingImpact(true);
+    try {
+      const res = await fetch(`/api/articles/${articleId}/impact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userProfileId: profileId,
+          policyParameterId: data.policyParameters.id,
+        }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        setImpactData(result);
+      } else {
+        console.error('Impact calculation failed:', await res.text());
+      }
+    } catch (err) {
+      console.error('Impact calculation failed:', err);
+    } finally {
+      setIsCalculatingImpact(false);
     }
   };
 
@@ -441,9 +518,9 @@ export default function ArticleAnalysisPage({
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Article Text - Left Column */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow p-6 max-h-[calc(100vh-220px)] overflow-y-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[repeat(15,1fr)] gap-6 h-[calc(100vh-100px)]">
+          {/* Article Text - columns 1-2, rows 1-9 (3/5 of height) */}
+          <div className="lg:col-span-2 lg:row-start-1 lg:row-span-9 bg-white rounded-lg shadow p-6 overflow-y-auto min-h-0">
             <ArticleTextPanel
               title={data.article.title}
               author={data.article.author}
@@ -457,54 +534,53 @@ export default function ArticleAnalysisPage({
             />
           </div>
 
-          {/* Right Sidebar */}
-          <div className="flex flex-col gap-4 max-h-[calc(100vh-220px)]">
-            {/* Argument Elements */}
-            <div className="bg-white rounded-lg shadow p-4 flex-1 min-h-0 overflow-hidden flex flex-col">
-              <h2 className="font-semibold text-gray-900 mb-3">
-                Argument Elements ({data.counts.claims + data.counts.assumptions + data.counts.predictions + data.counts.values})
-              </h2>
-              <div className="flex-1 overflow-y-auto">
-                <ArgumentSidebar
-                  claims={data.argumentElements.claims}
-                  assumptions={data.argumentElements.assumptions}
-                  predictions={data.argumentElements.predictions}
-                  values={data.argumentElements.values}
-                  selectedElementId={selectedElementId}
-                  highlightedElementId={highlightedElementId}
-                  onElementSelect={setSelectedElementId}
-                  activeTab={activeArgumentTab}
-                  onTabChange={setActiveArgumentTab}
-                />
-              </div>
-            </div>
+          {/* Personal Impact Section - columns 1-2, rows 10-15 (2/5 of height) */}
+          <div className="lg:col-span-2 lg:row-start-10 lg:row-span-6 min-h-0">
+            <PersonalImpactSection
+              data={impactData as any}
+              isLoading={isCalculatingImpact}
+              hasProfile={hasProfile}
+              profileId={profileId || undefined}
+              onCalculate={calculateImpact}
+            />
+          </div>
 
-            {/* Omissions */}
-            <div className="bg-white rounded-lg shadow p-4 flex-1 min-h-0 overflow-y-auto">
-              <OmissionsPanel
-                omissions={data.omissions.map(o => ({
-                  ...o,
-                  type: o.type as any,
-                  method: o.method as any,
-                }))}
-                onSentenceClick={handleSentenceSelect}
+          {/* Argument Elements - column 3, rows 1-5 (1/3 of height) */}
+          <div className="lg:col-start-3 lg:row-start-1 lg:row-span-5 bg-white rounded-lg shadow p-4 min-h-0 overflow-hidden flex flex-col">
+            <h2 className="font-semibold text-gray-900 mb-3">
+              Argument Elements ({data.counts.claims + data.counts.assumptions + data.counts.predictions + data.counts.values})
+            </h2>
+            <div className="flex-1 overflow-y-auto">
+              <ArgumentSidebar
+                claims={data.argumentElements.claims}
+                assumptions={data.argumentElements.assumptions}
+                predictions={data.argumentElements.predictions}
+                values={data.argumentElements.values}
+                selectedElementId={selectedElementId}
+                highlightedElementId={highlightedElementId}
+                onElementSelect={setSelectedElementId}
+                activeTab={activeArgumentTab}
+                onTabChange={setActiveArgumentTab}
               />
             </div>
-
-            {/* Context Cards */}
-            <div className="bg-white rounded-lg shadow p-4 flex-1 min-h-0 overflow-y-auto">
-              <ContextCardsPanel contextCards={data.contextCards} />
-            </div>
           </div>
-        </div>
 
-        {/* Personal Impact Section - Always Visible */}
-        <div className="mt-6">
-          <PersonalImpactSection
-            data={null}
-            hasProfile={false}
-            onCalculate={undefined}
-          />
+          {/* Omissions - column 3, rows 6-10 (1/3 of height) */}
+          <div className="lg:col-start-3 lg:row-start-6 lg:row-span-5 bg-white rounded-lg shadow p-4 min-h-0 overflow-y-auto">
+            <OmissionsPanel
+              omissions={data.omissions.map(o => ({
+                ...o,
+                type: o.type as any,
+                method: o.method as any,
+              }))}
+              onSentenceClick={handleSentenceSelect}
+            />
+          </div>
+
+          {/* Context Cards - column 3, rows 11-15 (1/3 of height) */}
+          <div className="lg:col-start-3 lg:row-start-11 lg:row-span-5 bg-white rounded-lg shadow p-4 min-h-0 overflow-y-auto">
+            <ContextCardsPanel contextCards={data.contextCards} />
+          </div>
         </div>
       </div>
 

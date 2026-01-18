@@ -422,11 +422,22 @@ export function calculateImpact(
     };
   }
 
-  // Determine impact direction
+  // Determine impact direction based on formula semantics
+  // 'benefit' = positive result is good for user (savings)
+  // 'burden' = positive result is bad for user (costs)
+  const semantics = primaryFormula.impactSemantics || 'benefit';
   let impactDirection: 'positive' | 'negative' | 'neutral' | 'mixed' = 'neutral';
-  if (finalResult > 100) impactDirection = 'positive';
-  else if (finalResult < -100) impactDirection = 'negative';
-  else if (finalResult !== 0) impactDirection = finalResult > 0 ? 'positive' : 'negative';
+
+  if (Math.abs(finalResult) <= 100) {
+    // Small impact - treat as neutral
+    impactDirection = finalResult !== 0 ? (finalResult > 0 ? (semantics === 'benefit' ? 'positive' : 'negative') : (semantics === 'benefit' ? 'negative' : 'positive')) : 'neutral';
+  } else if (semantics === 'benefit') {
+    // Positive number = savings (positive for user)
+    impactDirection = finalResult > 0 ? 'positive' : 'negative';
+  } else {
+    // semantics === 'burden': Positive number = costs (negative for user)
+    impactDirection = finalResult > 0 ? 'negative' : 'positive';
+  }
 
   // Build caveats
   const caveats: Caveat[] = [];

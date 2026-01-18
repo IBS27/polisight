@@ -48,6 +48,7 @@ const LLMPolicyResponseSchema = z.discriminatedUnion('extractionStatus', [
       expression: z.string(),
       requiredInputs: z.array(z.string()),
       outputUnit: z.enum(['dollars', 'percentage', 'boolean']),
+      impactSemantics: z.enum(['benefit', 'burden']).optional().default('benefit'),
     })),
     sourceSentenceIndices: z.array(z.number()).optional(),
   }),
@@ -104,18 +105,94 @@ EXTRACTION CRITERIA:
 3. Look for effective dates and duration
 4. Look for formulas or rules that determine amounts
 
-RESPONSE OPTIONS:
+RESPONSE OPTIONS (respond with valid JSON matching one of these structures):
+
+IMPORTANT - Valid enum values (you MUST use ONLY these exact values):
+- policyType: "tax_change" | "tax_credit" | "benefit_new" | "benefit_modification" | "benefit_elimination" | "subsidy" | "mandate" | "regulation" | "other"
+- taxType: "income" | "payroll" | "capital_gains" | "sales" | "property" | "other"
+- outputUnit: "dollars" | "percentage" | "boolean"
+- impactSemantics: "benefit" | "burden"
+  - Use "benefit" when positive formula result = user SAVES money (tax cuts, credits, subsidies)
+  - Use "burden" when positive formula result = user PAYS MORE (tax increases, fees, penalties)
 
 Option 1 - "extracted": Use when you find specific, quantifiable parameters
 - Include calculation formulas using profile fields like: household_income, individual_income, age, state, household_size, filing_status
 - Example formula: "household_income * 0.02" or "max(0, 12000 - household_income * 0.05)"
 
+Example JSON for Option 1 (tax cut = benefit):
+{
+  "extractionStatus": "extracted",
+  "policyType": "tax_change",
+  "parameters": {
+    "effectiveDate": "2025-01-01",
+    "incomeBrackets": [{"minIncome": 0, "maxIncome": 50000, "currentRate": 0.10, "newRate": 0.08}],
+    "taxType": "income"
+  },
+  "calculationFormulas": [{
+    "formulaId": "tax_savings",
+    "name": "Tax Savings",
+    "description": "Annual tax savings from rate reduction",
+    "expression": "household_income * 0.02",
+    "requiredInputs": ["household_income"],
+    "outputUnit": "dollars",
+    "impactSemantics": "benefit"
+  }],
+  "sourceSentenceIndices": [1, 5, 12]
+}
+
+Example JSON for Option 1 (tax increase = burden):
+{
+  "extractionStatus": "extracted",
+  "policyType": "tax_change",
+  "parameters": {
+    "effectiveDate": "2025-01-01",
+    "incomeBrackets": [{"minIncome": 1000000, "maxIncome": null, "currentRate": 0.039, "newRate": 0.059}],
+    "taxType": "income"
+  },
+  "calculationFormulas": [{
+    "formulaId": "additional_tax",
+    "name": "Additional Tax Liability",
+    "description": "Additional annual tax from rate increase on income over $1M",
+    "expression": "max(0, individual_income - 1000000) * 0.02",
+    "requiredInputs": ["individual_income"],
+    "outputUnit": "dollars",
+    "impactSemantics": "burden"
+  }],
+  "sourceSentenceIndices": [1, 5, 12]
+}
+
 Option 2 - "insufficient_detail": Use when the article discusses policy but lacks specific numbers
 - Explain what information is missing
 - Include any partial parameters you could extract
 
+Example JSON for Option 2:
+{
+  "extractionStatus": "insufficient_detail",
+  "reason": "Article mentions tax cuts but does not specify rates or income brackets",
+  "missingInformation": ["specific tax rates", "income thresholds", "effective date"],
+  "partialParameters": {
+    "policyDescription": "Proposed income tax reduction for middle class"
+  }
+}
+
 Option 3 - "not_applicable": Use when the article doesn't discuss quantifiable policy changes
 - Explain why (e.g., opinion piece, historical analysis, no financial impact)
+
+Example JSON for Option 3:
+{
+  "extractionStatus": "not_applicable",
+  "reason": "Article is an opinion piece about policy philosophy without specific proposals"
+}
+
+CRITICAL REQUIREMENTS:
+1. The discriminator field MUST be named "extractionStatus" (not "status")
+2. All enum fields MUST use ONLY the exact values listed above:
+   - policyType must be one of: tax_change, tax_credit, benefit_new, benefit_modification, benefit_elimination, subsidy, mandate, regulation, other
+   - taxType must be one of: income, payroll, capital_gains, sales, property, other
+   - outputUnit must be one of: dollars, percentage, boolean
+   - impactSemantics must be one of: benefit, burden
+3. Do NOT use descriptive text for enum fields (e.g., use "income" not "NYC Personal Income Tax")
+4. CRITICAL for impactSemantics: Tax INCREASES and new fees use "burden". Tax CUTS and credits use "benefit"
 
 Be conservative: Only return "extracted" if you have enough detail to write a calculation formula.`;
 }
