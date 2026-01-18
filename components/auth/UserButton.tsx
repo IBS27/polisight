@@ -14,7 +14,12 @@ import {
 import { LogIn, LogOut, User, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-export function UserButton() {
+interface UserButtonProps {
+  collapsed?: boolean;
+  menuSide?: 'top' | 'bottom' | 'left' | 'right';
+}
+
+export function UserButton({ collapsed = false, menuSide = 'bottom' }: UserButtonProps) {
   const { user, isLoading } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -42,7 +47,7 @@ export function UserButton() {
 
   if (isLoading) {
     return (
-      <Button variant="ghost" size="sm" disabled>
+      <Button variant="ghost" size="sm" disabled className={collapsed ? 'w-full justify-center' : 'w-full justify-start'}>
         <Loader2 className="w-4 h-4 animate-spin" />
       </Button>
     );
@@ -55,13 +60,14 @@ export function UserButton() {
         size="sm"
         onClick={handleSignIn}
         disabled={isSigningIn}
+        className={collapsed ? 'w-full justify-center' : 'w-full justify-start'}
       >
         {isSigningIn ? (
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <LogIn className="w-4 h-4 mr-2" />
+          <LogIn className="w-4 h-4" />
         )}
-        Sign in
+        {!collapsed && <span className="ml-2">Sign in</span>}
       </Button>
     );
   }
@@ -69,7 +75,7 @@ export function UserButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
+        <Button variant="ghost" size="sm" className={collapsed ? 'w-full justify-center' : 'w-full justify-start gap-2'}>
           {user.avatarUrl ? (
             <img
               src={user.avatarUrl}
@@ -79,12 +85,14 @@ export function UserButton() {
           ) : (
             <User className="w-4 h-4" />
           )}
-          <span className="hidden sm:inline truncate max-w-[120px]">
-            {user.name || user.email || 'User'}
-          </span>
+          {!collapsed && (
+            <span className="truncate max-w-[160px]">
+              {user.name || user.email || 'User'}
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent side={menuSide} align="start" className="w-48">
         <div className="px-2 py-1.5 text-sm text-gray-500">
           {user.email}
         </div>

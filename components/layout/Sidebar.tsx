@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
+import { UserButton } from '@/components/auth/UserButton';
 import {
   Home,
   User,
@@ -203,6 +204,14 @@ export function Sidebar() {
           </p>
         </div>
       )}
+
+      {/* User profile at bottom */}
+      <div className={cn(
+        'border-t p-2 mt-auto flex-shrink-0',
+        isCollapsed && 'flex justify-center'
+      )}>
+        <UserButton collapsed={isCollapsed} menuSide="top" />
+      </div>
     </aside>
   );
 }
