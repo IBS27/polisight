@@ -448,9 +448,9 @@ export default function ArticleAnalysisPage({
           </div>
 
           {/* Right Sidebar */}
-          <div className="space-y-6">
+          <div className="flex flex-col gap-4 max-h-[calc(100vh-220px)]">
             {/* Argument Elements */}
-            <div className="bg-white rounded-lg shadow p-4 max-h-80 overflow-hidden flex flex-col">
+            <div className="bg-white rounded-lg shadow p-4 flex-1 min-h-0 overflow-hidden flex flex-col">
               <h2 className="font-semibold text-gray-900 mb-3">
                 Argument Elements ({data.counts.claims + data.counts.assumptions + data.counts.predictions + data.counts.values})
               </h2>
@@ -470,7 +470,7 @@ export default function ArticleAnalysisPage({
             </div>
 
             {/* Omissions */}
-            <div className="bg-white rounded-lg shadow p-4 max-h-64 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow p-4 flex-1 min-h-0 overflow-y-auto">
               <OmissionsPanel
                 omissions={data.omissions.map(o => ({
                   ...o,
@@ -482,7 +482,7 @@ export default function ArticleAnalysisPage({
             </div>
 
             {/* Context Cards */}
-            <div className="bg-white rounded-lg shadow p-4 max-h-80 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow p-4 flex-1 min-h-0 overflow-y-auto">
               <ContextCardsPanel contextCards={data.contextCards} />
             </div>
           </div>
