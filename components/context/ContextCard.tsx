@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ExternalLink, BookOpen } from 'lucide-react';
+import { ChevronDown, ExternalLink, BookOpen, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ============================================
@@ -29,6 +29,53 @@ interface ContextCardProps {
   summary: string;
   keyFacts: KeyFact[];
   citations: Citation[];
+}
+
+interface ParsedContent {
+  verdict: string | null;
+  keyData: string[];
+  perspectives: { supporting: string | null; opposing: string | null };
+  hasStructuredFormat: boolean;
+}
+
+// ============================================
+// Helper: Parse Structured Content
+// ============================================
+
+function parseStructuredContent(summary: string): ParsedContent {
+  const result: ParsedContent = {
+    verdict: null,
+    keyData: [],
+    perspectives: { supporting: null, opposing: null },
+    hasStructuredFormat: false,
+  };
+
+  // Extract verdict
+  const verdictMatch = summary.match(/\*\*Verdict:\*\*\s*(.+?)(?=\n|$)/);
+  if (verdictMatch) {
+    result.verdict = verdictMatch[1].trim();
+    result.hasStructuredFormat = true;
+  }
+
+  // Extract key data bullets
+  const keyDataMatch = summary.match(/\*\*Key Data:\*\*\n([\s\S]*?)(?=\n\*\*|$)/);
+  if (keyDataMatch) {
+    const bullets = keyDataMatch[1].match(/[•\-]\s*(.+)/g) || [];
+    result.keyData = bullets.map(b => b.replace(/^[•\-]\s*/, '').trim());
+    result.hasStructuredFormat = true;
+  }
+
+  // Extract perspectives
+  const perspectivesMatch = summary.match(/\*\*Perspectives:\*\*\n([\s\S]*?)(?=\n\*\*|$)/);
+  if (perspectivesMatch) {
+    const supportingMatch = perspectivesMatch[1].match(/[•\-]\s*Supporting:\s*(.+)/);
+    const opposingMatch = perspectivesMatch[1].match(/[•\-]\s*Opposing:\s*(.+)/);
+    if (supportingMatch) result.perspectives.supporting = supportingMatch[1].trim();
+    if (opposingMatch) result.perspectives.opposing = opposingMatch[1].trim();
+    result.hasStructuredFormat = true;
+  }
+
+  return result;
 }
 
 // ============================================
@@ -62,6 +109,10 @@ export function ContextCard({
   citations,
 }: ContextCardProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showFullSummary, setShowFullSummary] = useState(false);
+
+  // Parse structured content from summary
+  const parsed = useMemo(() => parseStructuredContent(summary), [summary]);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -88,28 +139,88 @@ export function ContextCard({
         {/* Expandable content */}
         <CollapsibleContent>
           <div className="px-3 pb-3 border-t border-gray-100 space-y-2">
-            {/* Summary */}
-            <p className="text-sm text-gray-600 pt-2">{summary}</p>
+            {/* Verdict - prominent display */}
+            {parsed.verdict && (
+              <p className="text-sm font-medium text-gray-800 pt-2 pb-1 border-b border-gray-50">
+                {parsed.verdict}
+              </p>
+            )}
 
-            {/* Key Facts - compact */}
-            {keyFacts.length > 0 && (
-              <div className="text-xs">
+            {/* Key Data - primary content when structured */}
+            {parsed.hasStructuredFormat && parsed.keyData.length > 0 ? (
+              <div className="text-xs pt-1">
                 <h4 className="font-medium text-gray-500 mb-1 flex items-center gap-1">
                   <BookOpen className="w-3 h-3" />
-                  Key Facts
+                  Key Data
                 </h4>
                 <ul className="space-y-0.5 pl-1">
-                  {keyFacts.map((fact, idx) => (
+                  {parsed.keyData.map((data, idx) => (
                     <li key={idx} className="text-gray-600 flex items-start gap-1">
                       <span className="text-gray-400">•</span>
-                      <span>
-                        {fact.fact}
-                        <sup className="text-blue-500 ml-0.5">[{fact.citationIndex + 1}]</sup>
-                      </span>
+                      <span>{data}</span>
                     </li>
                   ))}
                 </ul>
               </div>
+            ) : (
+              /* Fall back to keyFacts if no structured format */
+              keyFacts.length > 0 && (
+                <div className="text-xs pt-1">
+                  <h4 className="font-medium text-gray-500 mb-1 flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" />
+                    Key Facts
+                  </h4>
+                  <ul className="space-y-0.5 pl-1">
+                    {keyFacts.map((fact, idx) => (
+                      <li key={idx} className="text-gray-600 flex items-start gap-1">
+                        <span className="text-gray-400">•</span>
+                        <span>
+                          {fact.fact}
+                          <sup className="text-blue-500 ml-0.5">[{fact.citationIndex + 1}]</sup>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            )}
+
+            {/* Perspectives - compact display */}
+            {(parsed.perspectives.supporting || parsed.perspectives.opposing) && (
+              <div className="text-xs pt-1">
+                <h4 className="font-medium text-gray-500 mb-1">Perspectives</h4>
+                <div className="space-y-0.5 pl-1">
+                  {parsed.perspectives.supporting && (
+                    <p className="text-gray-600">
+                      <span className="text-green-600 font-medium">Supporting:</span> {parsed.perspectives.supporting}
+                    </p>
+                  )}
+                  {parsed.perspectives.opposing && (
+                    <p className="text-gray-600">
+                      <span className="text-red-600 font-medium">Opposing:</span> {parsed.perspectives.opposing}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Show details toggle - only for structured content */}
+            {parsed.hasStructuredFormat && (
+              <button
+                onClick={() => setShowFullSummary(!showFullSummary)}
+                className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-0.5 pt-1"
+              >
+                <ChevronRight className={cn('w-3 h-3 transition-transform', showFullSummary && 'rotate-90')} />
+                {showFullSummary ? 'Hide details' : 'Show details'}
+              </button>
+            )}
+
+            {/* Full summary - hidden by default for structured content */}
+            {(!parsed.hasStructuredFormat || showFullSummary) && !parsed.verdict && (
+              <p className="text-sm text-gray-600 pt-2">{summary}</p>
+            )}
+            {parsed.hasStructuredFormat && showFullSummary && (
+              <p className="text-xs text-gray-500 pt-1 pl-2 border-l-2 border-gray-200 whitespace-pre-wrap">{summary}</p>
             )}
 
             {/* Sources - compact inline */}

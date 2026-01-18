@@ -4,6 +4,66 @@ import { searchWithCitations, generateContextQuery } from '@/lib/services/perple
 import { createTimedLogger } from '@/lib/services/provenance';
 
 // ============================================
+// Helper: Extract Key Facts from Structured Response
+// ============================================
+
+interface KeyFact {
+  fact: string;
+  citationIndex: number;
+}
+
+function extractKeyFacts(content: string, citationCount: number): KeyFact[] {
+  const keyFacts: KeyFact[] = [];
+
+  // Look for bullet points in Key Data section
+  const keyDataMatch = content.match(/\*\*Key Data:\*\*\n([\s\S]*?)(?=\n\*\*|$)/);
+  if (keyDataMatch) {
+    const bullets = keyDataMatch[1].match(/[•\-]\s*(.+)/g) || [];
+    for (const bullet of bullets.slice(0, 3)) {
+      const fact = bullet.replace(/^[•\-]\s*/, '').trim();
+      // Extract citation number if present (e.g., [1], [2])
+      const citationMatch = fact.match(/\[(\d+)\]/);
+      const citationIndex = citationMatch
+        ? Math.min(parseInt(citationMatch[1]) - 1, citationCount - 1)
+        : 0;
+      keyFacts.push({
+        fact: fact.replace(/\[\d+\]/g, '').trim(),
+        citationIndex: Math.max(0, citationIndex),
+      });
+    }
+  }
+
+  // Fallback: if structured format not found, extract from bullets anywhere
+  if (keyFacts.length === 0) {
+    const allBullets = content.match(/[•\-]\s*(.+)/g) || [];
+    for (const bullet of allBullets.slice(0, 3)) {
+      const fact = bullet.replace(/^[•\-]\s*/, '').trim();
+      const citationMatch = fact.match(/\[(\d+)\]/);
+      const citationIndex = citationMatch
+        ? Math.min(parseInt(citationMatch[1]) - 1, citationCount - 1)
+        : 0;
+      keyFacts.push({
+        fact: fact.replace(/\[\d+\]/g, '').trim(),
+        citationIndex: Math.max(0, citationIndex),
+      });
+    }
+  }
+
+  // Final fallback: split by sentences if no bullets found
+  if (keyFacts.length === 0) {
+    const sentences = content.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 20);
+    for (const sentence of sentences.slice(0, 3)) {
+      keyFacts.push({
+        fact: sentence.trim(),
+        citationIndex: 0,
+      });
+    }
+  }
+
+  return keyFacts;
+}
+
+// ============================================
 // POST /api/articles/[id]/context - Expand context
 // ============================================
 
@@ -100,12 +160,8 @@ export async function POST(
         try {
           const contextData = await searchWithCitations(task.query);
 
-          // Extract key facts from the content
-          const sentences = contextData.content.split(/[.!?]+/).filter(s => s.trim().length > 20);
-          const keyFacts = sentences.slice(0, 3).map((fact, idx) => ({
-            fact: fact.trim(),
-            citationIndex: Math.min(idx, contextData.citations.length - 1),
-          }));
+          // Extract key facts from structured response
+          const keyFacts = extractKeyFacts(contextData.content, contextData.citations.length);
 
           return {
             success: true as const,

@@ -112,13 +112,21 @@ export async function searchWithCitations(
   const model = options?.model || DEFAULT_MODEL;
 
   const systemPrompt = options?.systemPrompt ||
-    `You are a neutral, factual research assistant. Provide balanced, well-sourced information about policy topics.
-     Focus on:
-     - Historical context and precedents
-     - Multiple perspectives on the issue
-     - Factual data and statistics from reliable sources
-     - Potential impacts on different groups
-     Avoid taking political positions or making value judgments.`;
+    `You are a factual research assistant providing concise context.
+
+RESPOND WITH EXACTLY THIS FORMAT:
+**Verdict:** [1 sentence summary of the facts]
+
+**Key Data:**
+• [Statistic or fact with source number]
+• [Statistic or fact with source number]
+• [Statistic or fact with source number]
+
+**Perspectives:**
+• Supporting: [Brief view]
+• Opposing: [Brief view]
+
+Keep total response under 150 words. Prioritize statistics and verifiable data over narrative.`;
 
   const messages: PerplexityMessage[] = [
     { role: 'system', content: systemPrompt },
