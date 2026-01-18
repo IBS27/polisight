@@ -651,7 +651,6 @@ export default function ArticleAnalysisPage({
                 type: o.type as any,
                 method: o.method as any,
               }))}
-              onSentenceClick={handleSentenceSelect}
             />
           </div>
 

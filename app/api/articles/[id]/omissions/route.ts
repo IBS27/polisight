@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { detectOmissions, toOmissionRecords } from '@/lib/services/omission-detection';
+import { detectOmissionsWithLLM } from '@/lib/services/omission-detection';
 import { createTimedLogger } from '@/lib/services/provenance';
 
 // ============================================
@@ -54,8 +54,9 @@ export async function POST(
       sentenceIndex: s.sentence_index,
     }));
 
-    // Run omission detection
-    const detections = detectOmissions(sentenceSpans, article.title);
+    // Run LLM-based omission detection
+    const result = await detectOmissionsWithLLM(sentenceSpans, article.title);
+    const { omissions: detections, model, promptTokens, completionTokens } = result;
 
     // Delete existing omissions for this article (in case of re-detection)
     await supabase
@@ -71,7 +72,6 @@ export async function POST(
         detection_method: d.detectionMethod,
         description: d.description,
         why_it_matters: d.whyItMatters,
-        related_sentences: d.relatedSentenceIndices.map(idx => ({ sentenceIndex: idx })),
       }));
 
       const { error: insertError } = await supabase
@@ -89,14 +89,18 @@ export async function POST(
 
     // Log provenance
     const logger = createTimedLogger('article', articleId, articleId);
-    await logger.log('analyzed', 'Omission detection completed', {
+    await logger.log('analyzed', 'LLM-based omission detection completed', {
       inputData: {
         sentenceCount: sentences.length,
       },
       outputData: {
         omissionCount: detections.length,
         omissionTypes: detections.map(d => d.omissionType),
+        model,
+        promptTokens,
+        completionTokens,
       },
+      apiProvider: 'openrouter',
     });
 
     return NextResponse.json({
@@ -106,9 +110,9 @@ export async function POST(
         method: d.detectionMethod,
         description: d.description,
         whyItMatters: d.whyItMatters,
-        relatedSentences: d.relatedSentenceIndices,
       })),
       count: detections.length,
+      model,
       durationMs: Date.now() - startTime,
     });
   } catch (error) {
@@ -158,7 +162,6 @@ export async function GET(
         method: o.detection_method,
         description: o.description,
         whyItMatters: o.why_it_matters,
-        relatedSentences: o.related_sentences,
       })) || [],
       count: omissions?.length || 0,
     });

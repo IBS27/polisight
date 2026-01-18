@@ -21,13 +21,10 @@ type OmissionType =
 type DetectionMethod = 'deterministic' | 'llm_detected' | 'pattern_match';
 
 interface OmissionCardProps {
-  id: string;
   type: OmissionType;
   method: DetectionMethod;
   description: string;
   whyItMatters?: string;
-  relatedSentences?: Array<{ sentenceIndex: number }>;
-  onSentenceClick?: (index: number) => void;
 }
 
 // ============================================
@@ -67,13 +64,10 @@ const methodLabels: Record<DetectionMethod, string> = {
 // ============================================
 
 export function OmissionCard({
-  id,
   type,
   method,
   description,
   whyItMatters,
-  relatedSentences,
-  onSentenceClick,
 }: OmissionCardProps) {
   const Icon = typeIcons[type] || AlertTriangle;
 
@@ -99,21 +93,6 @@ export function OmissionCard({
           <div className="mt-2 p-2 bg-orange-100/50 rounded text-xs text-orange-800">
             <span className="font-medium">Why this matters: </span>
             {whyItMatters}
-          </div>
-        )}
-
-        {relatedSentences && relatedSentences.length > 0 && onSentenceClick && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            <span className="text-xs text-gray-500">Related sentences:</span>
-            {relatedSentences.map((s) => (
-              <button
-                key={s.sentenceIndex}
-                onClick={() => onSentenceClick(s.sentenceIndex)}
-                className="text-xs text-orange-600 hover:text-orange-800 hover:underline"
-              >
-                #{s.sentenceIndex + 1}
-              </button>
-            ))}
           </div>
         )}
       </CardContent>

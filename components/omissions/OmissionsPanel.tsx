@@ -13,19 +13,17 @@ interface Omission {
   method: 'deterministic' | 'llm_detected' | 'pattern_match';
   description: string;
   whyItMatters?: string;
-  relatedSentences?: Array<{ sentenceIndex: number }>;
 }
 
 interface OmissionsPanelProps {
   omissions: Omission[];
-  onSentenceClick?: (index: number) => void;
 }
 
 // ============================================
 // Component
 // ============================================
 
-export function OmissionsPanel({ omissions, onSentenceClick }: OmissionsPanelProps) {
+export function OmissionsPanel({ omissions }: OmissionsPanelProps) {
   if (omissions.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -49,13 +47,10 @@ export function OmissionsPanel({ omissions, onSentenceClick }: OmissionsPanelPro
       {omissions.map((omission) => (
         <OmissionCard
           key={omission.id}
-          id={omission.id}
           type={omission.type}
           method={omission.method}
           description={omission.description}
           whyItMatters={omission.whyItMatters}
-          relatedSentences={omission.relatedSentences}
-          onSentenceClick={onSentenceClick}
         />
       ))}
 
