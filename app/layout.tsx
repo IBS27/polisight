@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Polisight",
+  title: "PoliSight",
   description: "Political literacy app that analyzes policy articles to help you understand how policies affect you personally",
 };
 

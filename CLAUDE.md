@@ -1,8 +1,8 @@
-# Polisight - Claude Code Guidelines
+# PoliSight - Claude Code Guidelines
 
 ## Project Overview
 
-Polisight is a political literacy web app that analyzes policy articles to help users understand how policies affect them personally. It extracts articles, analyzes arguments, identifies omissions, and calculates personalized impact scores.
+PoliSight is a political literacy web app that analyzes policy articles to help users understand how policies affect them personally. It extracts articles, analyzes arguments, identifies omissions, and calculates personalized impact scores.
 
 ## Tech Stack
 
@@ -163,7 +163,7 @@ headers: {
   'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
   'Content-Type': 'application/json',
   'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  'X-Title': 'Polisight',
+  'X-Title': 'PoliSight',
 }
 ```
 

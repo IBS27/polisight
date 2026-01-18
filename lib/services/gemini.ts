@@ -119,7 +119,7 @@ export async function callGeminiWithSchema<T>(
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-      'X-Title': 'Polisight',
+      'X-Title': 'PoliSight',
     },
     body: JSON.stringify({
       model,
@@ -243,7 +243,7 @@ export async function callGemini(
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-      'X-Title': 'Polisight',
+      'X-Title': 'PoliSight',
     },
     body: JSON.stringify({
       model,

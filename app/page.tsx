@@ -59,7 +59,7 @@ export default function HomePage() {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Polisight
+            PoliSight
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Understand policy articles deeply. Decompose arguments, detect omissions,
@@ -135,7 +135,7 @@ export default function HomePage() {
 
         {/* Footer */}
         <div className="text-center mt-16 text-sm text-gray-500">
-          <p>Polisight helps you become a more informed citizen.</p>
+          <p>PoliSight helps you become a more informed citizen.</p>
           <p className="mt-1">All analysis is transparent and verifiable.</p>
         </div>
       </div>

@@ -139,7 +139,7 @@ Keep total response under 150 words. Prioritize statistics and verifiable data o
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-      'X-Title': 'Polisight',
+      'X-Title': 'PoliSight',
     },
     body: JSON.stringify({
       model,

@@ -1,4 +1,4 @@
--- Polisight Initial Database Schema
+-- PoliSight Initial Database Schema
 -- Stores user profiles, articles, argument analysis, and impact calculations
 
 -- Enable UUID generation

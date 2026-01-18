@@ -1,4 +1,4 @@
--- Polisight RLS Policies Migration
+-- PoliSight RLS Policies Migration
 -- Adds Row Level Security to protect user data
 
 -- ============================================

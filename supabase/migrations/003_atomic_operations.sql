@@ -1,4 +1,4 @@
--- Polisight Atomic Operations Migration
+-- PoliSight Atomic Operations Migration
 -- Creates stored procedures for transactional delete-and-insert operations
 -- Prevents data loss if insert fails after delete
 
