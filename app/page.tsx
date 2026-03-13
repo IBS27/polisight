@@ -42,7 +42,7 @@ export default function HomePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to analyze article');
+        throw new Error(data.details || data.error || 'Failed to analyze article');
       }
 
       // Navigate to article page

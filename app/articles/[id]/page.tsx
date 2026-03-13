@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useEffectEvent } from 'react';
 import Link from 'next/link';
 import { ArticleTextPanel } from '@/components/article/ArticleTextPanel';
 import { ArgumentSidebar, type TabType } from '@/components/analysis/ArgumentSidebar';
@@ -9,6 +9,7 @@ import { ContextCardsPanel } from '@/components/context/ContextCardsPanel';
 import { PersonalImpactSection } from '@/components/impact/PersonalImpactSection';
 import { ImpactBulletsList, type ImpactBulletsData } from '@/components/impact/ImpactBulletsList';
 import { ProvenanceDrawer } from '@/components/provenance/ProvenanceDrawer';
+import { useArticleHistory } from '@/components/history/ArticleHistoryProvider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -118,6 +119,7 @@ export default function ArticleAnalysisPage({
 }) {
   const resolvedParams = use(params);
   const articleId = resolvedParams.id;
+  const { recordArticleView } = useArticleHistory();
 
   const [data, setData] = useState<ArticleData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -149,18 +151,25 @@ export default function ArticleAnalysisPage({
 
   // Fetch article data
   useEffect(() => {
-    fetchArticle();
+    void fetchArticle();
   }, [articleId]);
 
-  // Track article view for authenticated users
-  useEffect(() => {
-    if (data && articleId) {
-      // Fire and forget - don't await
-      fetch(`/api/articles/${articleId}/view`, { method: 'POST' }).catch(() => {
-        // Silently ignore tracking errors
-      });
+  const persistArticleView = useEffectEvent(async (id: string, title: string) => {
+    try {
+      await recordArticleView({ id, title });
+    } catch {
+      // Silently ignore history tracking errors
     }
-  }, [data, articleId]);
+  });
+
+  // Track article view for authenticated users and guests
+  useEffect(() => {
+    if (!data?.article.id || !data.article.title) {
+      return;
+    }
+
+    void persistArticleView(data.article.id, data.article.title);
+  }, [data?.article.id, data?.article.title]);
 
   // Fetch user profile on mount
   useEffect(() => {

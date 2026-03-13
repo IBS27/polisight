@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 // ============================================
 // GET /api/articles/[id] - Get full article with all related data
@@ -12,7 +12,7 @@ export async function GET(
   const { id: articleId } = await params;
 
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get article
     const { data: article, error: articleError } = await supabase
@@ -179,7 +179,7 @@ export async function DELETE(
   const { id: articleId } = await params;
 
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Delete article (cascades to related tables due to foreign keys)
     const { error } = await supabase

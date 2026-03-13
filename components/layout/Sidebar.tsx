@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useArticleHistory } from '@/components/history/ArticleHistoryProvider';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/client';
 import { UserButton } from '@/components/auth/UserButton';
 import {
   Home,
@@ -17,81 +17,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface ArticleHistoryItem {
-  id: string;
-  articleId: string;
-  title: string;
-  lastViewedAt: string;
-}
-
 export function Sidebar() {
   const { user, isLoading: authLoading } = useAuth();
+  const { articles, isLoading: isLoadingArticles } = useArticleHistory();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [articles, setArticles] = useState<ArticleHistoryItem[]>([]);
-  const [isLoadingArticles, setIsLoadingArticles] = useState(false);
-
-  // Fetch user's article history
-  useEffect(() => {
-    if (!user) {
-      setArticles([]);
-      return;
-    }
-
-    const fetchArticles = async () => {
-      setIsLoadingArticles(true);
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from('user_articles')
-          .select(
-            `
-            id,
-            article_id,
-            last_viewed_at,
-            articles (
-              title
-            )
-          `
-          )
-          .eq('user_id', user.id)
-          .order('last_viewed_at', { ascending: false })
-          .limit(20);
-
-        if (error) {
-          console.error('Failed to fetch articles:', error);
-          return;
-        }
-
-        setArticles(
-          (data || []).map((item) => {
-            // Handle the joined articles data - could be object or array depending on query
-            const articlesData = item.articles as { title: string } | { title: string }[] | null;
-            let title = 'Untitled';
-            if (articlesData) {
-              if (Array.isArray(articlesData)) {
-                title = articlesData[0]?.title || 'Untitled';
-              } else {
-                title = articlesData.title || 'Untitled';
-              }
-            }
-            return {
-              id: item.id,
-              articleId: item.article_id,
-              title,
-              lastViewedAt: item.last_viewed_at,
-            };
-          })
-        );
-      } catch (error) {
-        console.error('Failed to fetch articles:', error);
-      } finally {
-        setIsLoadingArticles(false);
-      }
-    };
-
-    fetchArticles();
-  }, [user]);
 
   const navItems = [
     { href: '/', icon: Home, label: 'Home' },
@@ -148,12 +78,18 @@ export function Sidebar() {
       </nav>
 
       {/* Article History */}
-      {!isCollapsed && user && (
+      {!isCollapsed && (
         <div className="flex-1 overflow-hidden flex flex-col min-h-0 border-t">
           <div className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-500">
             <FileText className="w-4 h-4" />
-            Your Articles
+            Recent Articles
           </div>
+
+          {!authLoading && (
+            <p className="px-4 pb-2 text-xs text-gray-400">
+              {user ? 'Synced to your account' : 'Saved in this browser'}
+            </p>
+          )}
 
           <div className="flex-1 overflow-y-auto px-2 pb-2">
             {authLoading || isLoadingArticles ? (
@@ -193,15 +129,6 @@ export function Sidebar() {
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Sign in prompt for unauthenticated users */}
-      {!isCollapsed && !user && !authLoading && (
-        <div className="flex-1 flex items-center justify-center p-4 border-t">
-          <p className="text-sm text-gray-400 text-center">
-            Sign in to save your article history
-          </p>
         </div>
       )}
 

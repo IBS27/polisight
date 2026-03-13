@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { ArticleHistoryProvider } from "@/components/history/ArticleHistoryProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
@@ -32,9 +33,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <AppLayout>
-            {children}
-          </AppLayout>
+          <ArticleHistoryProvider>
+            <AppLayout>
+              {children}
+            </AppLayout>
+          </ArticleHistoryProvider>
         </AuthProvider>
       </body>
     </html>

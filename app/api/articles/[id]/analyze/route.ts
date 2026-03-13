@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { analyzeArguments } from '@/lib/services/argument-analysis';
 import { createTimedLogger } from '@/lib/services/provenance';
 
@@ -15,7 +15,7 @@ export async function POST(
   const { id: articleId } = await params;
 
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get article
     const { data: article, error: articleError } = await supabase
@@ -159,7 +159,7 @@ export async function POST(
     console.error('Argument analysis error:', error);
 
     // Update status to error
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     await supabase
       .from('articles')
       .update({

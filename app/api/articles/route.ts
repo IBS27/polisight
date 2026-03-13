@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { extractArticle, isValidArticleUrl } from '@/lib/services/article-extractor';
 import { segmentSentences } from '@/lib/services/sentence-segmentation';
 import { createTimedLogger } from '@/lib/services/provenance';
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Check if article already exists
     const { data: existingArticle } = await supabase
@@ -93,7 +93,10 @@ export async function POST(request: NextRequest) {
     if (articleError || !article) {
       console.error('Failed to create article:', articleError);
       return NextResponse.json(
-        { error: 'Failed to create article record' },
+        {
+          error: 'Failed to create article record',
+          details: articleError?.message || 'Unknown database error',
+        },
         { status: 500 }
       );
     }
@@ -168,7 +171,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data: articles, error, count } = await supabase
       .from('articles')

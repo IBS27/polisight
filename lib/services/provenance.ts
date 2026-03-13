@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { ProvenanceAction, ApiProvider } from '@/lib/schemas/core';
 
 // ============================================
@@ -55,7 +55,7 @@ export async function logProvenance(entry: ProvenanceEntry): Promise<void> {
 
 export async function logProvenanceImmediate(entry: ProvenanceEntry): Promise<string | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from('provenance_logs')
@@ -105,7 +105,7 @@ async function flushProvenanceBuffer(): Promise<void> {
   const entries = logBuffer.splice(0, logBuffer.length);
 
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const records = entries.map(entry => ({
       entity_type: entry.entityType,
@@ -146,7 +146,7 @@ export async function getProvenanceForEntity(
   entityType: string,
   entityId: string
 ): Promise<ProvenanceEntry[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('provenance_logs')
@@ -179,7 +179,7 @@ export async function getProvenanceForEntity(
 export async function getProvenanceForArticle(
   articleId: string
 ): Promise<ProvenanceEntry[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('provenance_logs')
